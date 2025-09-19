@@ -1,15 +1,17 @@
 package com.multi.travel.vo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
 import java.util.List;
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class PageResponseVO {
-    private List<TourismVO> content;
-    private int pageNumber;
-    private int pageSize;
-    private int totalPages;
-    private long totalElements;
+import com.multi.travel.support.Pagination;
+
+public class PageResponseVO<T> {
+    private List<T> list;
+    private Pagination pagination;
+
+    public PageResponseVO(List<T> list, Pagination pagination) {
+        this.list = list;
+        this.pagination = pagination;
+    }
+
+    public List<T> getList() { return list; }
+    public Pagination getPagination() { return pagination; }
 }
