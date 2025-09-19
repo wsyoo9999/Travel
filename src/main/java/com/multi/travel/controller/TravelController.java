@@ -3,5 +3,4 @@ package com.multi.travel.controller;
 public class TravelController {
     //깃 실습
     //실습용
-    //실습용2
 }
