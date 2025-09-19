@@ -9,7 +9,7 @@ public class Pagination {
 
     private int start;      // 시작 인덱스
     private int end;        // 끝 인덱스
-    private int totalPages; // 전체 페이지 수
+    private int totalPages; // 전체 페이지 개수
     private int startPage;  // 블록 시작 페이지
     private int endPage;    // 블록 끝 페이지
 
