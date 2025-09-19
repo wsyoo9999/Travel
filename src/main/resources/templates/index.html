@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>Kakao Map — 관광 명소 데모</title>
+    <!-- Kakao Maps SDK: JS 키만 바꾸면 됨 -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0655c4042301822abc2935eb24a431c8&autoload=false&libraries=services,clusterer"></script>
+
+    <style>
+        :root{
+            --bg:#f7f7fb; --card:#fff; --border:#ececf2; --text:#1f2328; --muted:#6b7280; --accent:#111827;
+            --ring:rgba(17,24,39,.08); --shadow:0 6px 20px rgba(0,0,0,.06);
+            --blue:#2563eb; --green:#059669;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%; margin:0; font-family: ui-sans-serif,system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', Arial}
+        body{background:var(--bg); color:var(--text)}
+        header{display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10}
+        header h1{font-size:18px; margin:0}
+        header .hint{color:var(--muted); font-size:13px}
+        header .right{margin-left:auto; display:flex; gap:8px}
+        .btn{
+            border:1px solid var(--border); background:var(--card); padding:8px 12px; border-radius:10px; cursor:pointer;
+            box-shadow: var(--shadow);
+        }
+        .btn.primary{border-color:var(--accent); background:#fff}
+        .btn.small{padding:6px 10px; font-size:13px}
+        .btn:active{transform:translateY(1px)}
+
+        .wrap{display:grid; grid-template-columns:360px 1fr; height:calc(100% - 60px)}
+        aside{background:var(--card); border-right:1px solid var(--border); padding:12px; overflow:auto}
+        .sec-title{font-size:15px; font-weight:700; margin:8px 0 10px}
+        .row{display:flex; gap:8px; align-items:center}
+        input[type="text"]{
+            flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; outline:none;
+            box-shadow: inset 0 0 0 1px transparent; transition:.15s;
+        }
+        input[type="text"]:focus{box-shadow: inset 0 0 0 1px var(--ring), 0 0 0 3px var(--ring)}
+        .muted{color:var(--muted); font-size:12px}
+        .hr{height:1px; background:var(--border); margin:12px 0}
+
+        .cards{display:grid; gap:8px}
+        .card{
+            background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px; box-shadow:var(--shadow);
+            transition:.15s; cursor:pointer;
+        }
+        .card:hover{transform: translateY(-1px)}
+        .card h3{margin:0 0 6px; font-size:15px}
+        .card p{margin:2px 0; font-size:13px; color:var(--muted)}
+
+        main{position:relative}
+        #map{width:100%; height:100%}
+        .floating{position:absolute; top:12px; right:12px; display:flex; gap:8px}
+        .legend{
+            position:absolute; left:12px; bottom:12px; font-size:12px; color:var(--muted);
+            background:var(--card); border:1px solid var(--border); border-radius:12px; padding:8px 10px; box-shadow:var(--shadow)
+        }
+        .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--border); border-radius:999px; font-size:12px; color:var(--muted)}
+        .pill .dot{width:10px; height:10px; border-radius:999px}
+        .dot.blue{background:var(--blue)}
+        .dot.green{background:var(--green)}
+        .center-pill{margin-left:auto}
+
+        /* 모바일 */
+        @media (max-width: 960px){
+            .wrap{grid-template-columns:1fr}
+            aside{display:none}
+            .wrap.show-left aside{display:block; position:absolute; z-index:12; width:min(94vw, 360px); height:80vh; border-radius:16px; box-shadow:var(--shadow)}
+            .wrap.show-left main::after{content:""; position:absolute; inset:0; background:rgba(0,0,0,.06)}
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>관광 명소 찾기</h1>
+    <span class="hint">Kakao Maps + Places 데모</span>
+    <div class="right">
+        <button id="togglePanel" class="btn small">패널 토글</button>
+    </div>
+</header>
+
+<div class="wrap" id="wrap">
+    <aside>
+        <div class="sec-title">키워드 검색</div>
+        <div class="row">
+            <input id="kw" placeholder="예) 경복궁, 광화문 카페" />
+            <button class="btn primary" id="btnSearch">검색</button>
+        </div>
+        <div class="muted" style="margin-top:6px">키워드로 장소를 찾고, 결과는 파란 마커로 표시됩니다.</div>
+
+        <div class="hr"></div>
+        <div class="cards" id="searchList"></div>
+
+        <div class="hr"></div>
+        <div class="sec-title">주변 관광명소</div>
+        <div class="row" style="justify-content:space-between;">
+            <button class="btn" id="btnNearby">현재 중심에서 찾기</button>
+            <span class="pill" id="centerLabel">center: - , -</span>
+        </div>
+        <div class="muted" style="margin-top:6px">관광명소(AT4)는 초록 마커로 표시됩니다.</div>
+        <div class="cards" id="nearList" style="margin-top:8px"></div>
+    </aside>
+
+    <main>
+        <div id="map"></div>
+        <div class="floating">
+            <button class="btn small" id="btnSeoul">서울</button>
+            <button class="btn small" id="btnBusan">부산</button>
+            <button class="btn small" id="btnJeju">제주</button>
+        </div>
+        <div class="legend">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <span class="pill"><span class="dot blue"></span>검색 결과</span>
+                <span class="pill"><span class="dot green"></span>주변 관광명소</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    kakao.maps.load(function () {
+        // 지도 기본
+        const map = new kakao.maps.Map(document.getElementById('map'), {
+            center: new kakao.maps.LatLng(37.5665, 126.9780),
+            level: 6
+        });
+
+        // 서비스
+        const places = new kakao.maps.services.Places();
+        const info = new kakao.maps.InfoWindow({ zIndex: 2 });
+
+        // 마커 관리
+        const clusterSearch = new kakao.maps.MarkerClusterer({ map, averageCenter: true, minLevel: 7 });
+        let searchMarkers = [];
+        let nearMarkers = [];
+
+        // DOM
+        const $kw = document.getElementById('kw');
+        const $btnSearch = document.getElementById('btnSearch');
+        const $btnNearby = document.getElementById('btnNearby');
+        const $searchList = document.getElementById('searchList');
+        const $nearList = document.getElementById('nearList');
+        const $centerLabel = document.getElementById('centerLabel');
+        const $wrap = document.getElementById('wrap');
+
+        // 패널 토글(모바일용)
+        document.getElementById('togglePanel').onclick = () => $wrap.classList.toggle('show-left');
+
+        function setCenterLabel(){
+            const c = map.getCenter();
+            $centerLabel.textContent = `center: ${c.getLat().toFixed(5)}, ${c.getLng().toFixed(5)}`;
+        }
+        setCenterLabel();
+        kakao.maps.event.addListener(map, 'center_changed', setCenterLabel);
+
+        function clearSearch(){
+            searchMarkers.forEach(m => m.setMap(null));
+            searchMarkers = [];
+            clusterSearch.clear();
+            $searchList.innerHTML = '';
+            info.close();
+        }
+        function clearNearby(){
+            nearMarkers.forEach(m => m.setMap(null));
+            nearMarkers = [];
+            $nearList.innerHTML = '';
+            info.close();
+        }
+
+        function card(item, index, color){
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.innerHTML = `
+          <h3>${index + 1}. ${item.place_name}</h3>
+          <p>${item.road_address_name || item.address_name || ''}</p>
+          <p>전화: ${item.phone || '-'}</p>
+        `;
+            el.onclick = () => map.panTo(new kakao.maps.LatLng(item.y, item.x));
+            return el;
+        }
+
+        // 키워드 검색 (파란 마커 + 클러스터)
+        function searchKeyword(){
+            const kw = ($kw.value || '').trim();
+            if(!kw) return alert('검색어를 입력하세요.');
+            clearSearch();
+
+            places.keywordSearch(kw, (data, status) => {
+                if(status !== kakao.maps.services.Status.OK) return alert('검색 결과가 없습니다.');
+                const bounds = new kakao.maps.LatLngBounds();
+
+                data.forEach((p, i) => {
+                    const pos = new kakao.maps.LatLng(p.y, p.x);
+                    bounds.extend(pos);
+                    const m = new kakao.maps.Marker({ position: pos }); // 기본 파란색
+                    searchMarkers.push(m);
+
+                    kakao.maps.event.addListener(m, 'click', () => {
+                        info.setContent(`
+                <div style="padding:8px 10px; min-width:180px">
+                  <div style="font-weight:600">${p.place_name}</div>
+                  <div style="font-size:12px; color:#666">${p.road_address_name || p.address_name || ''}</div>
+                  <a href="${p.place_url}" target="_blank" style="font-size:12px">상세보기</a>
+                </div>
+              `);
+                        info.open(map, m);
+                    });
+
+                    // 리스트
+                    $searchList.appendChild(card(p, i, 'blue'));
+                });
+
+                clusterSearch.addMarkers(searchMarkers);
+                map.setBounds(bounds);
+            }, {useMapBounds:false});
+        }
+
+        // 주변 관광명소(AT4) — 초록 별 마커
+        function searchNearby(){
+            clearNearby();
+            const center = map.getCenter();
+            const opt = { location: center, radius: 5000 };
+
+            places.categorySearch('AT4', (data, status) => {
+                if(status !== kakao.maps.services.Status.OK) return alert('주변 관광명소가 없습니다.');
+
+                data.forEach((p, i) => {
+                    const pos = new kakao.maps.LatLng(p.y, p.x);
+                    const img = new kakao.maps.MarkerImage(
+                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+                        new kakao.maps.Size(24, 35)
+                    );
+                    const m = new kakao.maps.Marker({ position: pos, image: img });
+                    m.setMap(map);
+                    nearMarkers.push(m);
+
+                    kakao.maps.event.addListener(m, 'click', () => {
+                        info.setContent(`
+                <div style="padding:8px 10px; min-width:180px">
+                  <div style="font-weight:600">[관광명소] ${p.place_name}</div>
+                  <div style="font-size:12px; color:#666">${p.road_address_name || p.address_name || ''}</div>
+                  <a href="${p.place_url}" target="_blank" style="font-size:12px">상세보기</a>
+                </div>
+              `);
+                        info.open(map, m);
+                    });
+
+                    $nearList.appendChild(card(p, i, 'green'));
+                });
+            }, opt);
+        }
+
+        // 빠른 이동 버튼
+        document.getElementById('btnSeoul').onclick = () => map.panTo(new kakao.maps.LatLng(37.5665,126.9780));
+        document.getElementById('btnBusan').onclick = () => map.panTo(new kakao.maps.LatLng(35.1796,129.0756));
+        document.getElementById('btnJeju').onclick = () => map.panTo(new kakao.maps.LatLng(33.4996,126.5312));
+
+        // 이벤트 바인딩
+        $btnSearch.onclick = searchKeyword;
+        $btnNearby.onclick = searchNearby;
+
+        // 엔터로 검색
+        $kw.addEventListener('keydown', e => { if(e.key === 'Enter') searchKeyword(); });
+    });
+</script>
+</body>
+</html>
