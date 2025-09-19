@@ -2,27 +2,34 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.multi.travel.mapper.TourismMapper">
 
-    <resultMap id="tourismResultMap" type="com.multi.travel.vo.TourismVO">
-        <id property="id" column="no"/>
-        <result property="name" column="title"/>
-        <result property="address" column="address"/>
-        <result property="phone" column="phone"/>
-    </resultMap>
+<!--    <resultMap id="tourismResultMap" type="com.multi.travel.vo.TourismVO">-->
+<!--        <id property="id" column="no"/>-->
+<!--        <result property="name" column="title"/>-->
+<!--        <result property="address" column="address"/>-->
+<!--        <result property="phone" column="phone"/>-->
+<!--    </resultMap>-->
 
-    <sql id="searchCondition">
-        <if test="keyword != null and keyword != ''">
-            WHERE title LIKE CONCAT('%', #{keyword}, '%')
-        </if>
-    </sql>
+<!--    <sql id="searchCondition">-->
+<!--        <if test="keyword != null and keyword != ''">-->
+<!--            WHERE title LIKE CONCAT('%', #{keyword}, '%')-->
+<!--        </if>-->
+<!--    </sql>-->
 
     <select id="count" resultType="int">
-        SELECT COUNT(*) FROM travel <include refid="searchCondition"/>
+        SELECT COUNT(*) FROM travel WHERE title   LIKE CONCAT('%', #{query}, '%')
     </select>
 
-    <select id="findList" resultMap="tourismResultMap">
+<!--    <select id="findList" resultMap="tourismResultMap">-->
+<!--        SELECT no, title, address, phone FROM travel-->
+<!--        <include refid="searchCondition"/>-->
+<!--        ORDER BY title ASC-->
+<!--        LIMIT #{limit} OFFSET #{offset}-->
+<!--    </select>-->
+
+    <select id="list" resultType="com.multi.travel.vo.TourismVO">
         SELECT no, title, address, phone FROM travel
-        <include refid="searchCondition"/>
-        ORDER BY title ASC
-        LIMIT #{limit} OFFSET #{offset}
+        WHERE title   LIKE CONCAT('%', #{query}, '%')
+        ORDER BY no ASC
+        LIMIT #{offset} , #{limit}
     </select>
 </mapper>

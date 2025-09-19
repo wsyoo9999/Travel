@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>KakaoMap 실습 3단계 - 카테고리 검색</title>
+    <!-- Kakao Maps JS SDK: 앱 키를 아래 YOUR_APP_KEY_HERE 로 교체하세요 -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bcede2c12916c20c494cd258349a2e52&autoload=false&libraries=services,clusterer"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', Arial; }
+        header { padding: 14px 18px; border-bottom: 1px solid #eee; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
+        header h1 { font-size: 18px; margin: 0 8px 0 0; }
+        header .hint { color:#666; font-size: 13px; }
+        .wrap { padding: 12px; max-width: 1100px; margin: 0 auto; }
+        .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin-bottom:10px; }
+        input[type="text"], select { padding: 10px 12px; border:1px solid #ddd; border-radius:10px; }
+        input[type="text"] { flex: 1; min-width: 260px; }
+        button { padding: 10px 14px; border:1px solid #ddd; background:#fafafa; border-radius:10px; cursor:pointer; }
+        .map { width:100%; height:420px; border:1px solid #f0f0f0; border-radius: 12px; overflow: hidden; }
+        .list { display:grid; gap:8px; margin-top: 10px; }
+        .card { border:1px solid #eee; border-radius:12px; padding:10px; }
+        .card h3 { margin: 0 0 6px; font-size: 15px; }
+        .card p { margin: 2px 0; color:#555; font-size: 13px; }
+        .small { font-size:12px; color:#777; }
+        .legend { margin-top:8px; color:#666; font-size: 12px; }
+
+        /* ===== Pagination: Sleek Pill (standalone, no Bootstrap required) ===== */
+        #paging nav[aria-label="pagination"]{
+            display:flex; justify-content:center; align-items:center;
+        }
+
+        #paging .pagination{
+            display:flex; align-items:center; gap:6px;
+            padding:6px 8px; margin:0;
+            border-radius:14px;
+            background: rgba(255,255,255,.65);
+            box-shadow: 0 6px 20px rgba(0,0,0,.06);
+            backdrop-filter: blur(6px);
+        }
+
+        #paging .page-item{ list-style:none; }
+
+        #paging .page-link{
+            display:inline-flex; align-items:center; justify-content:center;
+            min-width:34px; height:32px;
+            padding: 0 10px;
+            border-radius:999px;
+            border:none;
+            background:#f3f5f8;
+            color:#222; text-decoration:none; font-size:13px; font-weight:500;
+            box-shadow: inset 0 0 0 1px #e6e9ef;
+            transition: background .12s ease, transform .12s ease, box-shadow .12s ease, color .12s ease;
+        }
+
+        #paging .page-link:hover{
+            background:#eaf0ff;
+            box-shadow: inset 0 0 0 1px #d6e4ff;
+            transform: translateY(-1px);
+        }
+
+        #paging .page-item.active .page-link{
+            background:#2563eb; color:#fff;
+            box-shadow: 0 8px 18px rgba(37,99,235,.28);
+        }
+
+        #paging .page-item.disabled .page-link,
+        #paging .page-item.disabled .page-link:hover{
+            background:#f7f8fa; color:#9aa3af;
+            box-shadow: inset 0 0 0 1px #eceff3;
+            cursor:not-allowed; transform:none;
+        }
+
+        /* 키보드 접근성 */
+        #paging .page-link:focus{
+            outline:none;
+            box-shadow: 0 0 0 .2rem rgba(37,99,235,.25);
+        }
+
+        /* 작은 화면에서 살짝 압축 */
+        @media (max-width: 576px){
+            #paging .page-link{ min-width:30px; height:30px; font-size:12px; padding:0 8px; }
+            #paging .pagination{ gap:4px; padding:4px 6px; }
+        }
+
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+<header>
+    <h1>KakaoMap 실습 3단계</h1>
+    <span class="hint">카테고리(반경/현재 중심) + 클러스터러</span>
+</header>
+
+<script language="JavaScript">
+    document.addEventListener('DOMContentLoaded', function () {
+        paging(1, 5);  // 첫 진입시 5페이지, 사이즈 1로 가져오기
+    });
+    function paging(page,size,query) {
+
+        $.ajax({
+            url:"/async/list",
+            type:'GET',
+            contentType: "application/json;charset=UTF-8",
+            data : { page: page, size :size},
+            dataType: "json"
+        }).done(function(data) {
+            const wrap = document.getElementById('nearby');
+
+            // 기존 결과를 안전하게 제거
+            if (wrap.replaceChildren) wrap.replaceChildren();
+            else wrap.innerHTML = '';
+
+            $.each(data.lists, function(i, list) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                          <h3>${list.no}. ${list.title}</h3>
+                          <p>${list.address}</p>
+                          <a href="#" target="_blank" class="small">상세보기</a>
+                        `;
+                wrap.appendChild(card);
+            })
+            const pagination = data.pagination;
+            let pb = '';
+            pb+=``;
+            pb+=' <nav aria-label="pagination"><ul class="pagination pagination-sm mb-0">';
+            if(pagination.hasPrev) {
+                pb += `<li class=page-item><a class="page-link" href="#" onclick='paging(${pagination.prevPage},${pagination.size})'
+                    >«</a>
+                </li>`
+            }else{
+                pb+=`<li class="page-item disabled"><span class="page-link" >&laquo;</span></li>`;
+            }
+            if(pagination.hasPrevPage) {
+                pb += `<li class=page-item><a class="page-link" href="#" onclick='paging(${pagination.prev},${pagination.size})'
+                    >&lt;</a>
+                </li>`
+            }else{
+                pb+=`<li class="page-item disabled"><span class="page-link">&lt;</span></li>`;
+            }
+
+            for (let p = pagination.startPage; p <= pagination.endPage; p++) {
+                pb+=`<li class="page-item `;
+                if(pagination.page==p) pb+=`active`;
+                pb+=`">  <a class="page-link"  href="#" onclick='paging(${p},${pagination.size})'>${p}</a></li>`
+            }
+
+            if(pagination.hasNextPage) {
+                pb += `<li class=page-item><a class="page-link" href="#" onclick='paging(${pagination.next},${pagination.size})'
+                    >&gt;</a>
+                </li>`
+            }else{
+                pb+=`<li class="page-item disabled"><span class="page-link">&gt;</span></li>`;
+            }
+            if(pagination.hasNext) {
+                pb += `<li class=page-item><a class="page-link" href="#" onclick='paging(${pagination.nextPage},${pagination.size})'
+                    >&raquo;</a>
+                </li>`
+            }else{
+                pb+=`<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
+            }
+            pb += `</ul></nav>`;
+            const pagingEl = document.getElementById("paging");
+            pagingEl.innerHTML = pb;
+
+
+        })
+    }
+</script>
+<div class="wrap">
+
+    <!-- 3단계: 카테고리 검색 (관광지 AT4는 학생 과제로 둘 수 있음) -->
+    <div class="row">
+        <label class="small">카테고리</label>
+        <select id="category">
+            <option value="CE7" selected>카페(CE7)</option>
+            <option value="FD6">음식점(FD6)</option>
+            <option value="CS2">편의점(CS2)</option>
+            <option value="PM9">약국(PM9)</option>
+            <option value="SW8">지하철역(SW8)</option>
+            <option value="BK9">은행(BK9)</option>
+            <option value="PK6">주차장(PK6)</option>
+            <option value="OL7">주유소(OL7)</option>
+            <option value="CT1">문화시설(CT1)</option>
+            <!-- 과제: 관광명소(AT4) -->
+        </select>
+        <label class="small">반경</label>
+        <select id="radius">
+            <option value="1000">1km</option>
+            <option value="3000" selected>3km</option>
+            <option value="5000">5km</option>
+        </select>
+        <button id="nearbyBtn">현재 중심에서 찾기</button>
+        <label class="small"><input type="checkbox" id="autoRefresh" checked/> 자동 새로고침</label>
+        <span id="centerCoords" class="small"></span>
+    </div>
+
+    <div id="map" class="map"></div>
+    <div class="legend">🟢 카테고리 검색 결과 (클러스터링 적용)</div>
+    <div id="nearby" class="list"></div>
+    <div id="paging" class="list"></div>
+
+    <script>
+        kakao.maps.load(function() {
+            // 지도/클러스터러/서비스
+            const map = new kakao.maps.Map(document.getElementById('map'), {
+                center: new kakao.maps.LatLng(37.5665, 126.9780),
+                level: 6
+            });
+            const clusterer = new kakao.maps.MarkerClusterer({ map: map, averageCenter: true, minLevel: 7 });
+            const places = new kakao.maps.services.Places();
+            const infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
+
+            // DOM
+            const $nearby = document.getElementById('nearby');
+            const $paging = document.getElementById('paging');
+            const $centerCoords = document.getElementById('centerCoords');
+            const $category = document.getElementById('category');
+            const $radius = document.getElementById('radius');
+            const $autoRefresh = document.getElementById('autoRefresh');
+
+            // 상태
+            let markers = [];
+
+            // 유틸
+            function updateCenterLabel() {
+                const c = map.getCenter();
+                $centerCoords.textContent = `center: ${c.getLat().toFixed(5)}, ${c.getLng().toFixed(5)}`;
+            }
+          //   function clearMarkers() { markers.forEach(m => m.setMap(null)); markers = []; clusterer.clear(); }
+          //   function renderList(items) {
+          //       $nearby.innerHTML = '';
+          //       items.forEach((p, idx) => {
+          //           const card = document.createElement('div');
+          //           card.className = 'card';
+          //           card.innerHTML = `
+          //   <h3>${idx+1}. ${p.place_name}</h3>
+          //   <p>${p.road_address_name || p.address_name || ''}</p>
+          //   <p class="small">좌표: ${p.y}, ${p.x}</p>
+          //   <a href="${p.place_url}" target="_blank" class="small">상세보기</a>
+          // `;
+          //           card.onclick = () => map.panTo(new kakao.maps.LatLng(p.y, p.x));
+          //           $nearby.appendChild(card);
+          //       });
+          //   }
+          //
+          //   updateCenterLabel();
+          //   kakao.maps.event.addListener(map, 'center_changed', updateCenterLabel);
+          //
+          //   // 카테고리 검색
+          //   function searchByCategory() {
+          //       infowindow.close();
+          //       clearMarkers();
+          //       const center = map.getCenter();
+          //       const radius = parseInt($radius.value, 10);
+          //       const code = $category.value; // 예: CE7(카페)
+          //       const options = { location: center, radius: radius };
+          //
+          //       places.categorySearch(code, function(data, status) {
+          //           if (status !== kakao.maps.services.Status.OK) {
+          //               alert('주변 결과가 없습니다.');
+          //               renderList([]);
+          //               return;
+          //           }
+          //           const newMarkers = [];
+          //           data.forEach(p => {
+          //               const pos = new kakao.maps.LatLng(p.y, p.x);
+          //               const marker = new kakao.maps.Marker({ position: pos });
+          //               newMarkers.push(marker);
+          //
+          //               kakao.maps.event.addListener(marker, 'click', function() {
+          //                   const html = `
+          //       <div style="padding:8px 10px">
+          //         <div style="font-weight:600;margin-bottom:4px">[${code}] ${p.place_name}</div>
+          //         <div style="font-size:12px;color:#555">${p.road_address_name || p.address_name || ''}</div>
+          //         <a href="${p.place_url}" target="_blank" style="font-size:12px">상세보기</a>
+          //       </div>`;
+          //                   infowindow.setContent(html);
+          //                   infowindow.open(map, marker);
+          //               });
+          //           });
+          //           markers = newMarkers;
+          //           clusterer.addMarkers(markers);
+          //           renderList(data);
+          //       }, options);
+          //   }
+          //
+          //   // 이벤트
+          //   document.getElementById('nearbyBtn').onclick = searchByCategory;
+          //   kakao.maps.event.addListener(map, 'dragend', () => { if ($autoRefresh.checked) searchByCategory(); });
+          //
+          //   // 초기 1회 검색
+          //   searchByCategory();
+
+
+
+        })
+
+    </script>
+
+</div>
+</body>
+</html>

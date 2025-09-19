@@ -1,121 +1,121 @@
-<!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>내 DB 관광 명소</title>
-    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=b128209c9ae4dab493ade5f50b63bdcb"></script>
-    <style>
-        :root{--bg:#f7f7fb; --card:#fff; --border:#ececf2; --text:#1f2328; --muted:#6b7280;}
-        *{box-sizing:border-box}
-        html,body{height:100%; margin:0; font-family: sans-serif;}
-        body{background:var(--bg); color:var(--text)}
-        header{display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10}
-        header h1{font-size:18px; margin:0}
-        .wrap{display:grid; grid-template-columns:380px 1fr; height:calc(100% - 60px)}
-        aside{background:var(--card); border-right:1px solid var(--border); padding:12px; overflow:auto;}
-        main{position:relative}
-        #map{width:100%; height:100%;}
-        .sec-title{font-size:15px; font-weight:700; margin:15px 0 10px;}
-        .row{display:flex; gap:8px; align-items:center;}
-        input[type="text"]{flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px;}
-        .btn{border:1px solid var(--border); background:var(--card); padding:8px 12px; border-radius:10px; cursor:pointer;}
-        .cards{display:grid; gap:8px; margin-top: 10px;}
-        .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px;}
-        .card h3{margin:0 0 6px; font-size:15px}
-        .card p{margin:2px 0; font-size:13px; color:var(--muted)}
-        #pagination {display: flex; justify-content: space-between; align-items: center; margin-top: 15px;}
-        .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--border); border-radius:999px; font-size:12px; color:var(--muted)}
-    </style>
-</head>
-<body>
-<header>
-    <h1>내 DB 관광 명소</h1>
-</header>
-<div class="wrap">
-    <aside>
-        <div class="sec-title">키워드 검색</div>
-        <div class="row">
-            <input type="text" id="kw" placeholder="DB에서 관광지 검색">
-            <button class="btn" id="btnSearch">검색</button>
-        </div>
-        <div class="row" style="margin-top:10px;">
-            <button class="btn" id="btnLoadAll">전체 목록 보기</button>
-        </div>
-        <hr style="margin: 20px 0;">
+<!--<!DOCTYPE html>-->
+<!--<html lang="ko" xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>내 DB 관광 명소</title>-->
+<!--    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=b128209c9ae4dab493ade5f50b63bdcb"></script>-->
+<!--    <style>-->
+<!--        :root{&#45;&#45;bg:#f7f7fb; &#45;&#45;card:#fff; &#45;&#45;border:#ececf2; &#45;&#45;text:#1f2328; &#45;&#45;muted:#6b7280;}-->
+<!--        *{box-sizing:border-box}-->
+<!--        html,body{height:100%; margin:0; font-family: sans-serif;}-->
+<!--        body{background:var(&#45;&#45;bg); color:var(&#45;&#45;text)}-->
+<!--        header{display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(&#45;&#45;card); border-bottom:1px solid var(&#45;&#45;border); position:sticky; top:0; z-index:10}-->
+<!--        header h1{font-size:18px; margin:0}-->
+<!--        .wrap{display:grid; grid-template-columns:380px 1fr; height:calc(100% - 60px)}-->
+<!--        aside{background:var(&#45;&#45;card); border-right:1px solid var(&#45;&#45;border); padding:12px; overflow:auto;}-->
+<!--        main{position:relative}-->
+<!--        #map{width:100%; height:100%;}-->
+<!--        .sec-title{font-size:15px; font-weight:700; margin:15px 0 10px;}-->
+<!--        .row{display:flex; gap:8px; align-items:center;}-->
+<!--        input[type="text"]{flex:1; padding:10px 12px; border:1px solid var(&#45;&#45;border); border-radius:12px;}-->
+<!--        .btn{border:1px solid var(&#45;&#45;border); background:var(&#45;&#45;card); padding:8px 12px; border-radius:10px; cursor:pointer;}-->
+<!--        .cards{display:grid; gap:8px; margin-top: 10px;}-->
+<!--        .card{background:var(&#45;&#45;card); border:1px solid var(&#45;&#45;border); border-radius:14px; padding:10px;}-->
+<!--        .card h3{margin:0 0 6px; font-size:15px}-->
+<!--        .card p{margin:2px 0; font-size:13px; color:var(&#45;&#45;muted)}-->
+<!--        #pagination {display: flex; justify-content: space-between; align-items: center; margin-top: 15px;}-->
+<!--        .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(&#45;&#45;border); border-radius:999px; font-size:12px; color:var(&#45;&#45;muted)}-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<header>-->
+<!--    <h1>내 DB 관광 명소</h1>-->
+<!--</header>-->
+<!--<div class="wrap">-->
+<!--    <aside>-->
+<!--        <div class="sec-title">키워드 검색</div>-->
+<!--        <div class="row">-->
+<!--            <input type="text" id="kw" placeholder="DB에서 관광지 검색">-->
+<!--            <button class="btn" id="btnSearch">검색</button>-->
+<!--        </div>-->
+<!--        <div class="row" style="margin-top:10px;">-->
+<!--            <button class="btn" id="btnLoadAll">전체 목록 보기</button>-->
+<!--        </div>-->
+<!--        <hr style="margin: 20px 0;">-->
 
-        <div id="tourismListContainer" th:fragment="dbListFragment">
-            <div class="cards" th:if="${not #lists.isEmpty(pageData.content)}">
-                <div class="card" th:each="spot : ${pageData.content}">
-                    <h3 th:text="${spot.name}">관광지 이름</h3>
-                    <p th:text="${spot.address}">주소</p>
-                </div>
-            </div>
-            <div th:if="${#lists.isEmpty(pageData.content)}">
-                <p style="text-align:center; color: var(--muted);">결과가 없습니다.</p>
-            </div>
-            <div id="pagination" th:if="${pageData.totalPages > 1}">
-                <button class="btn" id="btnPrevPage" th:disabled="${pageData.pageNumber == 0}">이전</button>
-                <span class="pill" th:text="|페이지 ${pageData.pageNumber + 1} / ${pageData.totalPages}|"></span>
-                <button class="btn" id="btnNextPage" th:disabled="${pageData.pageNumber + 1 >= pageData.totalPages}">다음</button>
-            </div>
-        </div>
-    </aside>
-    <main>
-        <div id="map"></div>
-    </main>
-</div>
+<!--&lt;!&ndash;        <div id="tourismListContainer" th:fragment="dbListFragment">&ndash;&gt;-->
+<!--&lt;!&ndash;            <div class="cards" th:if="${not #lists.isEmpty(pageData.content)}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <div class="card" th:each="spot : ${pageData.content}">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <h3 th:text="${spot.name}">관광지 이름</h3>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <p th:text="${spot.address}">주소</p>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            <div th:if="${#lists.isEmpty(pageData.content)}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <p style="text-align:center; color: var(&#45;&#45;muted);">결과가 없습니다.</p>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            <div id="pagination" th:if="${pageData.totalPages > 1}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <button class="btn" id="btnPrevPage" th:disabled="${pageData.pageNumber == 0}">이전</button>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span class="pill" th:text="|페이지 ${pageData.pageNumber + 1} / ${pageData.totalPages}|"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                <button class="btn" id="btnNextPage" th:disabled="${pageData.pageNumber + 1 >= pageData.totalPages}">다음</button>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--    </aside>-->
+<!--    <main>-->
+<!--        <div id="map"></div>-->
+<!--    </main>-->
+<!--</div>-->
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    const mapContainer = document.getElementById('map');
-    const mapOption = {
-        center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 7
-    };
-    const map = new kakao.maps.Map(mapContainer, mapOption);
+<!--<script th:inline="javascript">-->
+<!--    /*<![CDATA[*/-->
+<!--    const mapContainer = document.getElementById('map');-->
+<!--    const mapOption = {-->
+<!--        center: new kakao.maps.LatLng(37.5665, 126.9780),-->
+<!--        level: 7-->
+<!--    };-->
+<!--    const map = new kakao.maps.Map(mapContainer, mapOption);-->
 
-    let currentPage = /*[[${pageData.pageNumber}]]*/ 0;
-    let currentKeyword = '';
+<!--    let currentPage = /*[[${pageData.pageNumber}]]*/ 0;-->
+<!--    let currentKeyword = '';-->
 
-    async function updateList(page, keyword) {
-        currentPage = page;
-        currentKeyword = keyword || '';
-        const url = `/list?page=${page}&keyword=${currentKeyword}`;
-        try {
-            const response = await fetch(url);
-            const htmlFragment = await response.text();
-            document.getElementById('tourismListContainer').innerHTML = htmlFragment;
-            bindPaginationEvents();
-        } catch (error) {
-            console.error("목록 업데이트 실패:", error);
-        }
-    }
+<!--    // async function updateList(page, keyword) {-->
+<!--    //     currentPage = page;-->
+<!--    //     currentKeyword = keyword || '';-->
+<!--    //     const url = `/list?page=${page}&keyword=${currentKeyword}`;-->
+<!--    //     try {-->
+<!--    //         const response = await fetch(url);-->
+<!--    //         const htmlFragment = await response.text();-->
+<!--    //         document.getElementById('tourismListContainer').innerHTML = htmlFragment;-->
+<!--    //         bindPaginationEvents();-->
+<!--    //     } catch (error) {-->
+<!--    //         console.error("목록 업데이트 실패:", error);-->
+<!--    //     }-->
+<!--    // }-->
 
-    function bindPaginationEvents() {
-        const btnPrev = document.getElementById('btnPrevPage');
-        const btnNext = document.getElementById('btnNextPage');
-        if (btnPrev) {
-            btnPrev.addEventListener('click', () => updateList(currentPage - 1, currentKeyword));
-        }
-        if (btnNext) {
-            btnNext.addEventListener('click', () => updateList(currentPage + 1, currentKeyword));
-        }
-    }
+<!--    function bindPaginationEvents() {-->
+<!--        const btnPrev = document.getElementById('btnPrevPage');-->
+<!--        const btnNext = document.getElementById('btnNextPage');-->
+<!--        if (btnPrev) {-->
+<!--            btnPrev.addEventListener('click', () => updateList(currentPage - 1, currentKeyword));-->
+<!--        }-->
+<!--        if (btnNext) {-->
+<!--            btnNext.addEventListener('click', () => updateList(currentPage + 1, currentKeyword));-->
+<!--        }-->
+<!--    }-->
 
-    document.getElementById('btnSearch').addEventListener('click', () => {
-        const keyword = document.getElementById('kw').value;
-        updateList(0, keyword);
-    });
+<!--    document.getElementById('btnSearch').addEventListener('click', () => {-->
+<!--        const keyword = document.getElementById('kw').value;-->
+<!--        updateList(0, keyword);-->
+<!--    });-->
 
-    document.getElementById('btnLoadAll').addEventListener('click', () => {
-        document.getElementById('kw').value = '';
-        updateList(0, null);
-    });
+<!--    document.getElementById('btnLoadAll').addEventListener('click', () => {-->
+<!--        document.getElementById('kw').value = '';-->
+<!--        updateList(0, null);-->
+<!--    });-->
 
-    document.addEventListener('DOMContentLoaded', () => {
-        bindPaginationEvents();
-    });
-    /*]]>*/
-</script>
-</body>
-</html>
+<!--    document.addEventListener('DOMContentLoaded', () => {-->
+<!--        bindPaginationEvents();-->
+<!--    });-->
+<!--    /*]]>*/-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
