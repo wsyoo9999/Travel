@@ -31,7 +31,7 @@ dependencies {
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'  // Thymeleaf
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'mysql:mysql-connector-java:8.0.31'
 
     compileOnly 'org.projectlombok:lombok'
 
