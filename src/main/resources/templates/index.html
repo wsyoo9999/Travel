@@ -2,11 +2,12 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>웹미니 프로젝트 - 관광 명소 찾기</title>
+    <title>웹 미니 프로젝트 - 관광 명소 찾기 (비동기)</title>
     <style>
         body { margin:0; font-family:sans-serif; }
         header { position:fixed; top:10px; left:10px; font-size:20px; font-weight:bold;
             background:rgba(255,255,255,0.8); padding:5px 10px; border-radius:5px; z-index:1000; }
+
         #container { display:flex; flex-direction:column; height:100vh; margin-top:50px; }
         #map { height:50%; width:80%; margin:auto; }
         #placesContainer { height:50%; overflow-y:auto; border-top:1px solid #ddd; width:80%; margin:auto; }
@@ -15,60 +16,79 @@
         #placesList li img { width:60px; height:50px; object-fit:cover; margin-right:8px; }
         #placesList li span.num { width:30px; display:inline-block; font-weight:bold; }
         #placesList li:hover { background:#f0f0f0; }
-        .pagination { text-align:center; margin:5px 0; }
-        .pagination a { margin:0 3px; text-decoration:none; color:blue; }
-        .pagination .current { font-weight:bold; color:black; }
-        #searchForm { text-align:center; margin:5px; }
-        #backBtn { display:block; margin:10px auto; padding:5px 10px; font-size:14px; cursor:pointer; }
+
+        .pagination { display:flex; justify-content:center; align-items:center; margin-top: 15px; }
+        .pagination ul { display:flex; align-items:center; gap:6px; padding:6px 8px; margin:0; list-style:none;
+            border-radius:14px; background: rgba(255,255,255,.65); box-shadow: 0 6px 20px rgba(0,0,0,.06);
+            backdrop-filter: blur(6px); }
+        .pagination a, .pagination span {
+            display:inline-flex; align-items:center; justify-content:center;
+            min-width:34px; height:32px; padding: 0 10px; border-radius:999px; border:none;
+            background:#f3f5f8; color:#222; text-decoration:none; font-size:13px; font-weight:500;
+            box-shadow: inset 0 0 0 1px #e6e9ef;
+            transition: background .12s ease, transform .12s ease, box-shadow .12s ease, color .12s ease;
+        }
+        .pagination a { cursor:pointer; }
+        .pagination a:hover { background:#eaf0ff; box-shadow: inset 0 0 0 1px #d6e4ff; transform: translateY(-1px); }
+        .pagination .active a, .pagination .active span { background:#2563eb; color:#fff; box-shadow: 0 8px 18px rgba(37,99,235,.28); }
+        .pagination .disabled span { background:#f7f8fa; color:#9aa3af; box-shadow: inset 0 0 0 1px #eceff3;
+            cursor:not-allowed; transform:none; }
+        @media (max-width: 576px){
+            .pagination a, .pagination span { min-width:30px; height:30px; font-size:12px; padding:0 8px; }
+            .pagination ul { gap:4px; padding:4px 6px; }
+        }
+
+        #searchContainer { text-align: center; margin: 15px 0; padding: 0 10px; }
+        .search-box { display: inline-flex; align-items: center; border-radius: 14px; background: #fff;
+            box-shadow: 0 6px 20px rgba(0,0,0,.08); padding: 6px 8px; border: 1px solid #e6e9ef;
+            transition: box-shadow .2s ease; }
+        .search-box:focus-within { box-shadow: 0 8px 25px rgba(37,99,235,.15); }
+        .search-box input[type="text"] { border: none; outline: none; padding: 10px 12px; font-size: 14px;
+            background: transparent; min-width: 280px; }
+        .search-box button[type="submit"] { border: none; border-radius: 999px; background: #2563eb; color: #fff;
+            font-weight: 500; font-size: 13px; padding: 10px 20px; cursor: pointer; transition: background .12s ease; }
+        .search-box button[type="submit"]:hover { background: #1d4ed8; }
+
+        /* 🔹 오른쪽 상단 Home 버튼 */
+        .back-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 18px;
+            background:#2563eb;
+            color:#fff;
+            border-radius:6px;
+            font-size:14px;
+            text-decoration:none;
+            transition: background .2s ease;
+            z-index:1001;
+        }
+        .back-btn:hover { background:#1e40af; }
+
     </style>
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=00280786a377c07676f112332c18df4a&libraries=services"></script>
 </head>
 <body>
 
-<header>웹미니 프로젝트</header>
+<header>웹 미니 프로젝트</header>
 
 <h2 style="text-align:center; margin-top:50px;">DB 관광 명소 + 카카오맵</h2>
 
-<div id="searchForm">
-    <form method="get" th:action="@{/}">
-        <input type="text" name="keyword" th:value="${keyword}" placeholder="관광지 검색">
+<div id="searchContainer">
+    <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
+        <input type="text" id="keywordInput" name="keyword" th:value="${keyword}" placeholder="관광지를 검색해보세요">
         <button type="submit">검색</button>
     </form>
 </div>
 
-<!-- 목록으로 돌아가기 버튼 -->
-<button id="backBtn">처음 목록으로 돌아가기</button>
+<!-- 🔹 오른쪽 상단 Home버튼 -->
+<a href="http://localhost:8080/" class="back-btn">🏠 Home</a>
 
 <div id="container">
     <div id="map"></div>
-
     <div id="placesContainer">
-        <ul id="placesList">
-            <li th:each="tour, iterStat : ${pageData.list}"
-                th:data-lat="${tour.lat}"
-                th:data-lng="${tour.lng}"
-                th:data-title="${tour.title}"
-                th:data-no="${tour.no}"
-                th:data-img="${tour.img}"
-                th:data-desc="${tour.description}">
-
-                <span class="num" th:text="${(pageData.pagination.page - 1) * pageData.pagination.size + iterStat.index + 1}">1</span>
-
-                <img th:src="${tour.img != null} ? @{${tour.img}} : @{/images/default.png}" alt="이미지">
-                <div>
-                    <strong th:text="${tour.title}">관광지 제목</strong><br>
-                    <span th:text="${tour.address}">주소</span>
-                </div>
-            </li>
-        </ul>
-
-        <div class="pagination">
-            <a th:if="${pageData.pagination.startPage > 1}" th:href="@{/(page=${pageData.pagination.startPage-1}, keyword=${keyword})}">«</a>
-            <a th:each="i : ${#numbers.sequence(pageData.pagination.startPage, pageData.pagination.endPage)}"
-               th:href="@{/(page=${i}, keyword=${keyword})}"
-               th:text="${i}" th:class="${i == pageData.pagination.page} ? 'current' : ''"></a>
-            <a th:if="${pageData.pagination.endPage < pageData.pagination.totalPages}" th:href="@{/(page=${pageData.pagination.endPage+1}, keyword=${keyword})}">»</a>
-        </div>
+        <ul id="placesList"></ul>
+        <div class="pagination"></div>
     </div>
 </div>
 
@@ -79,72 +99,128 @@
     });
 
     let markers = [];
-    let circle = null;
     let infowindow = new kakao.maps.InfoWindow({zIndex:1});
-    const initialCenter = map.getCenter(); // 초기 지도 중심
 
     function clearMap() {
         markers.forEach(m => m.setMap(null));
         markers = [];
-        if(circle) { circle.setMap(null); circle = null; }
         infowindow.close();
     }
 
-    document.querySelectorAll("#placesList li").forEach(li => {
-        const lat = parseFloat(li.getAttribute("data-lat"));
-        const lng = parseFloat(li.getAttribute("data-lng"));
-        const title = li.getAttribute("data-title");
-        const img = li.getAttribute("data-img") || '/images/default.png';
-        const no = li.getAttribute("data-no");
-        const desc = li.getAttribute("data-desc");
-        const pos = new kakao.maps.LatLng(lat, lng);
+    function renderList(pageData) {
+        const listEl = document.getElementById('placesList');
+        listEl.innerHTML = '';
+        pageData.list.forEach((tour, index) => {
+            const num = (pageData.pagination.page - 1) * pageData.pagination.size + index + 1;
+            const imageUrl = tour.img ? tour.img : '/images/default.png';
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span class="num">${num}</span>
+                <img src="${imageUrl}" alt="이미지">
+                <div>
+                    <strong>${tour.title}</strong><br>
+                    <span>${tour.address}</span>
+                </div>`;
+            li.dataset.lat = tour.lat;
+            li.dataset.lng = tour.lng;
+            li.dataset.title = tour.title;
+            li.dataset.no = tour.no;
+            li.dataset.img = imageUrl;
+            li.dataset.desc = tour.description;
+            listEl.appendChild(li);
+        });
+    }
 
-        const marker = new kakao.maps.Marker({ map: map, position: pos });
-        markers.push(marker);
+    function renderPagination(pageData, keyword) {
+        const paginationEl = document.querySelector('.pagination');
+        paginationEl.innerHTML = '';
+        const p = pageData.pagination;
+        if (!p || p.totalPages === 0) return;
+        let html = '<ul>';
+        if (p.startPage > 1) { html += `<li><a onclick="fetchTours(${p.startPage - 1}, '${keyword}')">«</a></li>`; }
+        else { html += `<li class="disabled"><span>«</span></li>`; }
+        if (p.page > 1) { html += `<li><a onclick="fetchTours(${p.page - 1}, '${keyword}')">&lt;</a></li>`; }
+        else { html += `<li class="disabled"><span>&lt;</span></li>`; }
+        for (let i = p.startPage; i <= p.endPage; i++) {
+            const activeClass = (i === p.page) ? 'class="active"' : '';
+            html += `<li ${activeClass}><a onclick="fetchTours(${i}, '${keyword}')">${i}</a></li>`;
+        }
+        if (p.page < p.totalPages) { html += `<li><a onclick="fetchTours(${p.page + 1}, '${keyword}')">&gt;</a></li>`; }
+        else { html += `<li class="disabled"><span>&gt;</span></li>`; }
+        if (p.endPage < p.totalPages) { html += `<li><a onclick="fetchTours(${p.endPage + 1}, '${keyword}')">»</a></li>`; }
+        else { html += `<li class="disabled"><span>»</span></li>`; }
+        html += '</ul>';
+        paginationEl.innerHTML = html;
+    }
 
-        li.addEventListener("click", () => {
-            map.setCenter(pos);
-            clearMap();
+    function updateMap(tourList) {
+        clearMap();
+        if (!tourList || tourList.length === 0) return;
+        const bounds = new kakao.maps.LatLngBounds();
+        tourList.forEach(tour => {
+            const pos = new kakao.maps.LatLng(tour.lat, tour.lng);
+            const marker = new kakao.maps.Marker({ map: map, position: pos });
             markers.push(marker);
-
-            infowindow.setContent(
-                `<div style="padding:5px; width:220px; position:relative;">
-                    <strong>${title}</strong><br>
-                    <img src='${img}' style='width:200px;height:100px;object-fit:cover;' /><br>
-                    <p style="font-size:12px;">${desc || '설명 없음'}</p>
-                    <a href='/tour?no=${no}'>상세보기</a>
-                    <button id="closeBtn" style="position:absolute; top:5px; right:5px;">X</button>
-                </div>`
-            );
-            infowindow.open(map, marker);
-
-            document.getElementById("closeBtn").addEventListener("click", () => {
-                infowindow.close();
-            });
-
-            circle = new kakao.maps.Circle({
-                map: map,
-                center: pos,
-                radius: 500,
-                strokeWeight: 1,
-                strokeColor: '#FF0000',
-                strokeOpacity: 0.7,
-                fillColor: '#FFAAAA',
-                fillOpacity: 0.3
+            bounds.extend(pos);
+            kakao.maps.event.addListener(marker, 'click', function() {
+                const imageUrl = tour.img ? tour.img : '/images/default.png';
+                const content = `
+                    <div style="padding:5px; width:220px; position:relative;">
+                        <button onclick="closeInfoWindow()"
+                            style="position:absolute; top:2px; right:2px; border:none; background:#f87171; color:#fff;
+                            font-size:12px; border-radius:3px; cursor:pointer;">✕</button>
+                        <strong>${tour.title}</strong><br>
+                        <img src='${imageUrl}' style='width:200px;height:100px;object-fit:cover;' /><br>
+                        <p style="font-size:12px; margin:5px 0;">${tour.description || '설명 없음'}</p>
+                        <a href='/tour?no=${tour.no}'>상세보기</a>
+                    </div>`;
+                infowindow.setContent(content);
+                infowindow.open(map, marker);
             });
         });
-    });
-
-    // "처음 목록으로 돌아가기" 버튼 클릭 시
-    document.getElementById("backBtn").addEventListener("click", () => {
-        window.location.href = "http://localhost:8080/"; // 홈 경로로 이동
-    });
-
-    if (markers.length > 0) {
-        const bounds = new kakao.maps.LatLngBounds();
-        markers.forEach(m => bounds.extend(m.getPosition()));
         map.setBounds(bounds);
     }
+
+    function closeInfoWindow() { infowindow.close(); }
+
+    function addListClickListeners() {
+        document.querySelectorAll("#placesList li").forEach(li => {
+            li.addEventListener("click", () => {
+                const lat = parseFloat(li.dataset.lat);
+                const lng = parseFloat(li.dataset.lng);
+                const pos = new kakao.maps.LatLng(lat, lng);
+                map.panTo(pos);
+                const targetMarker = markers.find(m => m.getPosition().equals(pos));
+                if (targetMarker) { kakao.maps.event.trigger(targetMarker, 'click'); }
+            });
+        });
+    }
+
+    async function fetchTours(page = 1, keyword = '') {
+        const size = 5;
+        const url = `/api/tours?page=${page}&size=${size}&keyword=${encodeURIComponent(keyword)}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            renderList(data.pageData);
+            renderPagination(data.pageData, data.keyword);
+            updateMap(data.pageData.list);
+            addListClickListeners();
+        } catch (error) {
+            console.error('Fetch error:', error);
+            document.getElementById('placesList').innerHTML = '<li>데이터를 불러오는 데 실패했습니다.</li>';
+        }
+    }
+
+    function handleSearch() {
+        const keyword = document.getElementById('keywordInput').value;
+        fetchTours(1, keyword);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchTours();
+    });
 </script>
 
 </body>
