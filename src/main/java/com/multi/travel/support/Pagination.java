@@ -39,5 +39,7 @@ public class Pagination {
     public int getTotalPages() { return totalPages; }
     public int getStartPage() { return startPage; }
     public int getEndPage() { return endPage; }
-
+    public int getOffset() {
+        return (page - 1) * size;
+    }
 }
