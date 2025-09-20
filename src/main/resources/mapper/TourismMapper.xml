@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -6,15 +6,31 @@
 <mapper namespace="com.multi.travel.mapper.TourismMapper">
 
     <select id="getTouristList" resultType="com.multi.travel.vo.TourismVO">
-        SELECT no, district, title, description, address, phone, lat, lng, img
-        FROM travel
-        ORDER BY no ASC
+        SELECT * FROM travel ORDER BY no ASC
     </select>
 
-    <select id="getTouristById" parameterType="int" resultType="com.multi.travel.vo.TourismVO">
-        SELECT no, district, title, description, address, phone, lat, lng, img
-        FROM travel
-        WHERE no = #{no}
+    <select id="getTouristById" resultType="com.multi.travel.vo.TourismVO">
+        SELECT * FROM travel WHERE no = #{no}
+    </select>
+
+    <select id="countTourist" resultType="int">
+        SELECT COUNT(*) FROM travel
+        <where>
+            <if test="keyword != null and keyword != ''">
+                title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="getTouristPage" resultType="com.multi.travel.vo.TourismVO">
+        SELECT * FROM travel
+        <where>
+            <if test="keyword != null and keyword != ''">
+                title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY no ASC
+        LIMIT #{start}, #{size}
     </select>
 
 </mapper>

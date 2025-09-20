@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>웹미니 프로젝트 - 관광 명소 찾기</title>
+    <style>
+        body { margin:0; font-family:sans-serif; }
+        header { position:fixed; top:10px; left:10px; font-size:20px; font-weight:bold;
+            background:rgba(255,255,255,0.8); padding:5px 10px; border-radius:5px; z-index:1000; }
+        #container { display:flex; flex-direction:column; height:100vh; margin-top:50px; }
+        #map { height:50%; width:80%; margin:auto; }
+        #placesContainer { height:50%; overflow-y:auto; border-top:1px solid #ddd; width:80%; margin:auto; }
+        #placesList { list-style:none; padding:0; margin:0; }
+        #placesList li { padding:8px; border-bottom:1px solid #ddd; cursor:pointer; display:flex; align-items:center; }
+        #placesList li img { width:60px; height:50px; object-fit:cover; margin-right:8px; }
+        #placesList li span.num { width:30px; display:inline-block; font-weight:bold; }
+        #placesList li:hover { background:#f0f0f0; }
+        .pagination { text-align:center; margin:5px 0; }
+        .pagination a { margin:0 3px; text-decoration:none; color:blue; }
+        .pagination .current { font-weight:bold; color:black; }
+        #searchForm { text-align:center; margin:5px; }
+    </style>
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=00280786a377c07676f112332c18df4a&libraries=services"></script>
+</head>
+<body>
+
+<header>웹미니 프로젝트</header>
+
+<h2 style="text-align:center; margin-top:50px;">DB 관광 명소 + 카카오맵</h2>
+
+<div id="searchForm">
+    <form method="get" th:action="@{/}">
+        <input type="text" name="keyword" th:value="${keyword}" placeholder="관광지 검색">
+        <button type="submit">검색</button>
+    </form>
+</div>
+
+<div id="container">
+    <div id="map"></div>
+
+    <div id="placesContainer">
+        <ul id="placesList">
+            <li th:each="tour, iterStat : ${pageData.list}"
+                th:data-lat="${tour.lat}"
+                th:data-lng="${tour.lng}"
+                th:data-title="${tour.title}"
+                th:data-no="${tour.no}"
+                th:data-img="${tour.img}"
+                th:data-desc="${tour.description}">
+
+                <!-- 항목 번호 -->
+                <span class="num" th:text="${(pageData.pagination.page - 1) * pageData.pagination.size + iterStat.index + 1}">1</span>
+
+                <img th:src="${tour.img != null} ? @{${tour.img}} : @{/images/default.png}" alt="이미지">
+                <div>
+                    <strong th:text="${tour.title}">관광지 제목</strong><br>
+                    <span th:text="${tour.address}">주소</span>
+                </div>
+            </li>
+        </ul>
+
+        <div class="pagination">
+            <a th:if="${pageData.pagination.startPage > 1}" th:href="@{/(page=${pageData.pagination.startPage-1}, keyword=${keyword})}">«</a>
+            <a th:each="i : ${#numbers.sequence(pageData.pagination.startPage, pageData.pagination.endPage)}"
+               th:href="@{/(page=${i}, keyword=${keyword})}"
+               th:text="${i}" th:class="${i == pageData.pagination.page} ? 'current' : ''"></a>
+            <a th:if="${pageData.pagination.endPage < pageData.pagination.totalPages}" th:href="@{/(page=${pageData.pagination.endPage+1}, keyword=${keyword})}">»</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const map = new kakao.maps.Map(document.getElementById('map'), {
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
+        level: 7
+    });
+
+    let markers = [];
+    let circle = null;
+    let infowindow = new kakao.maps.InfoWindow({zIndex:1});
+
+    function clearMap() {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+        if(circle) { circle.setMap(null); circle = null; }
+        infowindow.close(); // 인포윈도우도 닫기
+    }
+
+    document.querySelectorAll("#placesList li").forEach(li => {
+        const lat = parseFloat(li.getAttribute("data-lat"));
+        const lng = parseFloat(li.getAttribute("data-lng"));
+        const title = li.getAttribute("data-title");
+        const img = li.getAttribute("data-img") || '/images/default.png';
+        const no = li.getAttribute("data-no");
+        const desc = li.getAttribute("data-desc");
+        const pos = new kakao.maps.LatLng(lat, lng);
+
+        const marker = new kakao.maps.Marker({ map: map, position: pos });
+        markers.push(marker);
+
+        li.addEventListener("click", () => {
+            map.setCenter(pos);
+
+            // 기존 마커, 원 제거
+            clearMap();
+            markers.push(marker);
+
+            // 인포윈도우 내용에 닫기 버튼 추가
+            infowindow.setContent(
+                `<div style="padding:5px; width:220px; position:relative;">
+                    <strong>${title}</strong><br>
+                    <img src='${img}' style='width:200px;height:100px;object-fit:cover;' /><br>
+                    <p style="font-size:12px;">${desc || '설명 없음'}</p>
+                    <a href='/tour?no=${no}'>상세보기</a>
+                    <button id="closeBtn" style="position:absolute; top:5px; right:5px;">X</button>
+                </div>`
+            );
+            infowindow.open(map, marker);
+
+            // 닫기 버튼 이벤트
+            document.getElementById("closeBtn").addEventListener("click", () => {
+                infowindow.close();
+            });
+
+            // 주변 관광지 500m 원 표시
+            circle = new kakao.maps.Circle({
+                map: map,
+                center: pos,
+                radius: 500,
+                strokeWeight: 1,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.7,
+                fillColor: '#FFAAAA',
+                fillOpacity: 0.3
+            });
+
+            // TODO: DB 기반 주변 관광지 조회 후 마커 추가 가능
+        });
+    });
+
+    if (markers.length > 0) {
+        const bounds = new kakao.maps.LatLngBounds();
+        markers.forEach(m => bounds.extend(m.getPosition()));
+        map.setBounds(bounds);
+    }
+</script>
+
+</body>
+</html>
