@@ -17,4 +17,6 @@ public interface TourismMapper {
     List<TourismVO> getTouristPage(@Param("start") int start,
                                    @Param("size") int size,
                                    @Param("keyword") String keyword);
+
+    String getImg(@Param("id")int in);
 }
