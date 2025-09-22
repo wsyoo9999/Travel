@@ -34,4 +34,8 @@ public class TourismService {
         Pagination pagination = new Pagination(start / size + 1, size, countTourist(keyword), 5);
         return new PageResponseVO<>(list, pagination);
     }
+
+    public String getImg(int id){
+        return mapper.getImg(id);
+    }
 }
