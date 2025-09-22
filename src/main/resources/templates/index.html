@@ -13,7 +13,6 @@
         #placesContainer { height:50%; overflow-y:auto; border-top:1px solid #ddd; width:80%; margin:auto; }
         #placesList { list-style:none; padding:0; margin:0; }
         #placesList li { padding:8px; border-bottom:1px solid #ddd; cursor:pointer; display:flex; align-items:center; }
-        #placesList li img { width:60px; height:50px; object-fit:cover; margin-right:8px; }
         #placesList li span.num { width:30px; display:inline-block; font-weight:bold; }
         #placesList li:hover { background:#f0f0f0; }
 
@@ -96,12 +95,14 @@
     });
 
     let markers = [];
-    let infowindow = new kakao.maps.InfoWindow({zIndex:1});
+    let highlightedMarker = null;
+    let customOverlay = null;
 
     function clearMap() {
         markers.forEach(m => m.setMap(null));
         markers = [];
-        infowindow.close();
+        if(customOverlay) customOverlay.setMap(null);
+        highlightedMarker = null;
     }
 
     function renderList(pageData) {
@@ -109,20 +110,19 @@
         listEl.innerHTML = '';
         pageData.list.forEach((tour, index) => {
             const num = (pageData.pagination.page - 1) * pageData.pagination.size + index + 1;
-            const imageUrl = tour.img ? tour.img : '/images/default.png';
+            const address = tour.address ? tour.address : '';
             const li = document.createElement('li');
             li.innerHTML = `
             <span class="num">${num}</span>
-            <img src="${imageUrl}" alt="이미지">
             <div>
                 <strong>${tour.title}</strong><br>
-                <span>${tour.address}</span>
+                <span>${address}</span>
             </div>`;
             li.dataset.lat = tour.lat;
             li.dataset.lng = tour.lng;
             li.dataset.title = tour.title;
             li.dataset.no = tour.no;
-            li.dataset.img = imageUrl;
+            li.dataset.img = tour.img ? tour.img : '/images/default.png';
             listEl.appendChild(li);
         });
     }
@@ -160,37 +160,53 @@
             bounds.extend(pos);
 
             kakao.maps.event.addListener(marker, 'click', function() {
-                const imageUrl = tour.img ? tour.img : '/images/default.png';
-                const content = `
-                <div style="
-                    position:relative;
-                    padding:10px;
-                    width:300px;
-                    text-align:center;
-                    font-size:16px;
-                    font-weight:bold;
-                    line-height:1.4;
-                ">
-                    <button onclick="infowindow.close();" style="
-                        position:absolute;
-                        top:5px;
-                        right:5px;
-                        border:none;
-                        background:#f87171;
-                        color:#fff;
-                        font-size:12px;
-                        border-radius:3px;
-                        cursor:pointer;
-                        padding:2px 6px;
-                    ">✕</button>
-                    <div>${tour.title}</div>
-                    <img src='${imageUrl}' style='width:280px; height:150px; object-fit:cover; margin-top:8px; border-radius:6px;' />
-                </div>`;
-                infowindow.setContent(content);
-                infowindow.open(map, marker);
+                showCustomOverlay(tour);
             });
         });
         map.setBounds(bounds);
+    }
+
+    function showCustomOverlay(tour) {
+        if(customOverlay) customOverlay.setMap(null);
+
+        const imageUrl = tour.img ? tour.img : '/images/default.png';
+        const content = `
+        <div style="
+            position:relative;
+            padding:10px;
+            width:700px;
+            height:450px;
+            background:#fff;
+            border-radius:10px;
+            box-shadow:0 6px 20px rgba(0,0,0,0.4);
+            text-align:center;
+            font-size:20px;
+            font-weight:bold;
+            overflow:hidden;
+        ">
+            <button onclick="customOverlay.setMap(null);" style="
+                position:absolute;
+                top:10px;
+                right:10px;
+                border:none;
+                background:#f87171;
+                color:#fff;
+                font-size:16px;
+                border-radius:5px;
+                cursor:pointer;
+                padding:6px 10px;
+            ">✕</button>
+            <div style="margin-top:10px;">${tour.title}</div>
+            <img src="${imageUrl}" style="width:100%; height:380px; object-fit:cover; margin-top:10px; border-radius:6px;" />
+        </div>`;
+
+        customOverlay = new kakao.maps.CustomOverlay({
+            content: content,
+            position: map.getCenter(),
+            xAnchor: 0.5,
+            yAnchor: 0.5,
+            map: map
+        });
     }
 
     function addListClickListeners() {
@@ -200,8 +216,22 @@
                 const lng = parseFloat(li.dataset.lng);
                 const pos = new kakao.maps.LatLng(lat, lng);
                 map.panTo(pos);
+
+                // 강조 표시
+                if(highlightedMarker) highlightedMarker.setImage(null);
                 const targetMarker = markers.find(m => m.getPosition().equals(pos));
-                if (targetMarker) { kakao.maps.event.trigger(targetMarker, 'click'); }
+                if (targetMarker) {
+                    highlightedMarker = targetMarker;
+                    const markerImage = new kakao.maps.MarkerImage(
+                        "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
+                        new kakao.maps.Size(24,35)
+                    );
+                    targetMarker.setImage(markerImage);
+                    showCustomOverlay({
+                        title: li.dataset.title,
+                        img: li.dataset.img
+                    });
+                }
             });
         });
     }
