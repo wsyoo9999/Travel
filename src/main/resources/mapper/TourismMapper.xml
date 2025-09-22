@@ -10,8 +10,9 @@
     </select>
 
     <select id="getImg" resultType="String" parameterType="int">
-        SELECT img FROM travel where no = #{no} 0RDER BY no ASC
+        SELECT img FROM travel WHERE no = #{no}
     </select>
+
     <select id="getTouristById" resultType="com.multi.travel.vo.TourismVO">
         SELECT * FROM travel WHERE no = #{no}
     </select>
@@ -21,6 +22,7 @@
         <where>
             <if test="keyword != null and keyword != ''">
                 title LIKE CONCAT('%', #{keyword}, '%')
+                OR address LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
     </select>
@@ -30,6 +32,7 @@
         <where>
             <if test="keyword != null and keyword != ''">
                 title LIKE CONCAT('%', #{keyword}, '%')
+                OR address LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
         ORDER BY no ASC
