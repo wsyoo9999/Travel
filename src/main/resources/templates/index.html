@@ -49,7 +49,6 @@
             font-weight: 500; font-size: 13px; padding: 10px 20px; cursor: pointer; transition: background .12s ease; }
         .search-box button[type="submit"]:hover { background: #1d4ed8; }
 
-        /* 🔹 오른쪽 상단 Home 버튼 */
         .back-btn {
             position: fixed;
             top: 10px;
@@ -64,7 +63,6 @@
             z-index:1001;
         }
         .back-btn:hover { background:#1e40af; }
-
     </style>
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=00280786a377c07676f112332c18df4a&libraries=services"></script>
 </head>
@@ -81,7 +79,6 @@
     </form>
 </div>
 
-<!-- 🔹 오른쪽 상단 Home버튼 -->
 <a href="http://localhost:8080/" class="back-btn">🏠 Home</a>
 
 <div id="container">
@@ -115,18 +112,17 @@
             const imageUrl = tour.img ? tour.img : '/images/default.png';
             const li = document.createElement('li');
             li.innerHTML = `
-                <span class="num">${num}</span>
-                <img src="${imageUrl}" alt="이미지">
-                <div>
-                    <strong>${tour.title}</strong><br>
-                    <span>${tour.address}</span>
-                </div>`;
+            <span class="num">${num}</span>
+            <img src="${imageUrl}" alt="이미지">
+            <div>
+                <strong>${tour.title}</strong><br>
+                <span>${tour.address}</span>
+            </div>`;
             li.dataset.lat = tour.lat;
             li.dataset.lng = tour.lng;
             li.dataset.title = tour.title;
             li.dataset.no = tour.no;
             li.dataset.img = imageUrl;
-            li.dataset.desc = tour.description;
             listEl.appendChild(li);
         });
     }
@@ -162,26 +158,40 @@
             const marker = new kakao.maps.Marker({ map: map, position: pos });
             markers.push(marker);
             bounds.extend(pos);
+
             kakao.maps.event.addListener(marker, 'click', function() {
                 const imageUrl = tour.img ? tour.img : '/images/default.png';
                 const content = `
-                    <div style="padding:5px; width:220px; position:relative;">
-                        <button onclick="closeInfoWindow()"
-                            style="position:absolute; top:2px; right:2px; border:none; background:#f87171; color:#fff;
-                            font-size:12px; border-radius:3px; cursor:pointer;">✕</button>
-                        <strong>${tour.title}</strong><br>
-                        <img src='${imageUrl}' style='width:200px;height:100px;object-fit:cover;' /><br>
-                        <p style="font-size:12px; margin:5px 0;">${tour.description || '설명 없음'}</p>
-                        <a href='/tour?no=${tour.no}'>상세보기</a>
-                    </div>`;
+                <div style="
+                    position:relative;
+                    padding:10px;
+                    width:300px;
+                    text-align:center;
+                    font-size:16px;
+                    font-weight:bold;
+                    line-height:1.4;
+                ">
+                    <button onclick="infowindow.close();" style="
+                        position:absolute;
+                        top:5px;
+                        right:5px;
+                        border:none;
+                        background:#f87171;
+                        color:#fff;
+                        font-size:12px;
+                        border-radius:3px;
+                        cursor:pointer;
+                        padding:2px 6px;
+                    ">✕</button>
+                    <div>${tour.title}</div>
+                    <img src='${imageUrl}' style='width:280px; height:150px; object-fit:cover; margin-top:8px; border-radius:6px;' />
+                </div>`;
                 infowindow.setContent(content);
                 infowindow.open(map, marker);
             });
         });
         map.setBounds(bounds);
     }
-
-    function closeInfoWindow() { infowindow.close(); }
 
     function addListClickListeners() {
         document.querySelectorAll("#placesList li").forEach(li => {
