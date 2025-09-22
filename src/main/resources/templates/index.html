@@ -227,10 +227,8 @@
                         new kakao.maps.Size(24,35)
                     );
                     targetMarker.setImage(markerImage);
-                    showCustomOverlay({
-                        title: li.dataset.title,
-                        img: li.dataset.img
-                    });
+
+                    // 🔴 infowindow 호출 제거됨
                 }
             });
         });
