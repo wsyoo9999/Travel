@@ -3,79 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <title>웹 미니 프로젝트 - 관광 명소 찾기 (비동기)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { margin:0; font-family:sans-serif; }
-        header { position:fixed; top:10px; left:10px; font-size:20px; font-weight:bold;
-            background:rgba(255,255,255,0.8); padding:5px 10px; border-radius:5px; z-index:1000; }
+        /* --- 기본 스타일 및 전체 레이아웃 --- */
+        * {
+            box-sizing: border-box;
+        }
 
-        #container { display:flex; flex-direction:column; height:100vh; margin-top:50px; }
-        #map { height:50%; width:80%; margin:auto; }
-        #placesContainer { height:50%; overflow-y:auto; border-top:1px solid #ddd; width:80%; margin:auto; }
-        #placesList { list-style:none; padding:0; margin:0; }
-        #placesList li { padding:8px; border-bottom:1px solid #ddd; cursor:pointer; display:flex; align-items:center; }
-        #placesList li span.num { width:30px; display:inline-block; font-weight:bold; }
-        #placesList li:hover { background:#f0f0f0; }
+        body {
+            margin: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+        }
 
-        .pagination { display:flex; justify-content:center; align-items:center; margin-top: 15px; }
-        .pagination ul { display:flex; align-items:center; gap:6px; padding:6px 8px; margin:0; list-style:none;
-            border-radius:14px; background: rgba(255,255,255,.65); box-shadow: 0 6px 20px rgba(0,0,0,.06);
-            backdrop-filter: blur(6px); }
+        header {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 16px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(5px);
+        }
+
+        /* [추가] 제목과 검색창을 감싸는 Flex Wrapper */
+        .title-search-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            max-width: 1200px;
+            margin: 70px auto 15px auto; /* 상단 여백 확보 및 하단 여백 조정 */
+        }
+
+        /* [변경] 제목 스타일 수정 */
+        .main-title {
+            margin: 0; /* 불필요한 여백 제거 */
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        /* [변경] 검색창 컨테이너 스타일 수정 */
+        #searchContainer {
+            margin: 0; /* 불필요한 여백 제거 */
+            padding: 0;
+        }
+
+        .search-box {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 6px 8px;
+            border: 1px solid #e6e9ef;
+            transition: box-shadow .2s ease;
+        }
+
+        .search-box:focus-within {
+            box-shadow: 0 8px 25px rgba(37, 99, 235, .15);
+            border-color: #a5b4fc;
+        }
+
+        .search-box input[type="text"] {
+            border: none;
+            outline: none;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: transparent;
+            min-width: 280px;
+        }
+
+        .search-box button[type="submit"] {
+            border: none;
+            border-radius: 999px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 500;
+            font-size: 13px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background .12s ease;
+        }
+
+        .search-box button[type="submit"]:hover {
+            background: #1d4ed8;
+        }
+
+        /* --- 지도 및 목록 컨테이너 --- */
+        /* [변경] 높이 및 상단 여백 조정 */
+        #container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 130px); /* 전체 높이에서 상단 영역 제외한 값으로 재계산 */
+            width: 80%;
+            max-width: 1200px;
+            margin: 0 auto 20px auto; /* 상단 여백 제거, 하단 여백 추가 */
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background: #fff;
+        }
+
+        #map {
+            height: 55%;
+            width: 100%;
+        }
+
+        #placesContainer {
+            height: 45%;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        /* --- 장소 목록 스타일 --- */
+        #placesList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #placesList li {
+            padding: 12px 20px;
+            border-bottom: 1px solid #eef2f5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        #placesList li:last-child {
+            border-bottom: none;
+        }
+
+        #placesList li:hover {
+            background-color: #f8fafc;
+        }
+
+        #placesList li .num {
+            width: 35px;
+            display: inline-block;
+            font-weight: 700;
+            font-size: 16px;
+            color: #2563eb;
+            text-align: center;
+            margin-right: 15px;
+        }
+
+        #placesList li div {
+            flex-grow: 1;
+        }
+
+        #placesList li strong {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        #placesList li span {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        /* --- 페이지네이션 --- */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+            background-color: #fff;
+        }
+
+        .pagination ul {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            margin: 0;
+            list-style: none;
+            border-radius: 14px;
+            background: #f8fafc;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .06);
+        }
+
         .pagination a, .pagination span {
-            display:inline-flex; align-items:center; justify-content:center;
-            min-width:34px; height:32px; padding: 0 10px; border-radius:999px; border:none;
-            background:#f3f5f8; color:#222; text-decoration:none; font-size:13px; font-weight:500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 999px;
+            border: none;
+            background: #fff;
+            color: #334155;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
             box-shadow: inset 0 0 0 1px #e6e9ef;
-            transition: background .12s ease, transform .12s ease, box-shadow .12s ease, color .12s ease;
-        }
-        .pagination a { cursor:pointer; }
-        .pagination a:hover { background:#eaf0ff; box-shadow: inset 0 0 0 1px #d6e4ff; transform: translateY(-1px); }
-        .pagination .active a, .pagination .active span { background:#2563eb; color:#fff; box-shadow: 0 8px 18px rgba(37,99,235,.28); }
-        .pagination .disabled span { background:#f7f8fa; color:#9aa3af; box-shadow: inset 0 0 0 1px #eceff3;
-            cursor:not-allowed; transform:none; }
-        @media (max-width: 576px){
-            .pagination a, .pagination span { min-width:30px; height:30px; font-size:12px; padding:0 8px; }
-            .pagination ul { gap:4px; padding:4px 6px; }
+            transition: all .15s ease;
         }
 
-        #searchContainer { text-align: center; margin: 15px 0; padding: 0 10px; }
-        .search-box { display: inline-flex; align-items: center; border-radius: 14px; background: #fff;
-            box-shadow: 0 6px 20px rgba(0,0,0,.08); padding: 6px 8px; border: 1px solid #e6e9ef;
-            transition: box-shadow .2s ease; }
-        .search-box:focus-within { box-shadow: 0 8px 25px rgba(37,99,235,.15); }
-        .search-box input[type="text"] { border: none; outline: none; padding: 10px 12px; font-size: 14px;
-            background: transparent; min-width: 280px; }
-        .search-box button[type="submit"] { border: none; border-radius: 999px; background: #2563eb; color: #fff;
-            font-weight: 500; font-size: 13px; padding: 10px 20px; cursor: pointer; transition: background .12s ease; }
-        .search-box button[type="submit"]:hover { background: #1d4ed8; }
+        .pagination a:hover {
+            background: #eef2ff;
+            box-shadow: inset 0 0 0 1px #c7d2fe;
+            transform: translateY(-1px);
+        }
 
+        .pagination .active a, .pagination .active span {
+            background: #2563eb;
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, .28);
+        }
+
+        .pagination .disabled span {
+            background: #f1f5f9;
+            color: #94a3b8;
+            box-shadow: inset 0 0 0 1px #e2e8f0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- 홈으로 가기 버튼 --- */
         .back-btn {
             position: fixed;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             padding: 8px 18px;
-            background:#2563eb;
-            color:#fff;
-            border-radius:6px;
-            font-size:14px;
-            text-decoration:none;
-            transition: background .2s ease;
-            z-index:1001;
+            background: #fff;
+            color: #333;
+            border: 1px solid #e6e9ef;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all .2s ease;
+            z-index: 1001;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
-        .back-btn:hover { background:#1e40af; }
+
+        .back-btn:hover {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+        }
     </style>
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=00280786a377c07676f112332c18df4a&libraries=services"></script>
 </head>
 <body>
 
-<header>웹 미니 프로젝트</header>
+<header>관광 명소 찾기</header>
 
-<h2 style="text-align:center; margin-top:50px;">DB 관광 명소 + 카카오맵</h2>
-
-<div id="searchContainer">
-    <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
-        <input type="text" id="keywordInput" name="keyword" th:value="${keyword}" placeholder="관광지를 검색해보세요">
-        <button type="submit">검색</button>
-    </form>
+<div class="title-search-wrapper">
+    <h2 class="main-title">DB 관광 명소 + 카카오맵</h2>
+    <div id="searchContainer">
+        <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
+            <input type="text" id="keywordInput" name="keyword" th:value="${keyword}" placeholder="관광지를 검색해보세요">
+            <button type="submit">검색</button>
+        </form>
+    </div>
 </div>
 
 <a href="http://localhost:8080/" class="back-btn">🏠 Home</a>
@@ -100,15 +296,19 @@
     function clearMap() {
         markers.forEach(m => m.setMap(null));
         markers = [];
-        if(customOverlay) customOverlay.setMap(null);
+        if (customOverlay) customOverlay.setMap(null);
     }
 
     function renderList(pageData) {
         const listEl = document.getElementById('placesList');
         listEl.innerHTML = '';
+        if (!pageData || pageData.list.length === 0) {
+            listEl.innerHTML = `<li style="text-align:center; color:#999; cursor:default;">검색 결과가 없습니다.</li>`;
+            return;
+        }
         pageData.list.forEach((tour, index) => {
             const num = (pageData.pagination.page - 1) * pageData.pagination.size + index + 1;
-            const address = tour.address ? tour.address : '';
+            const address = tour.address ? tour.address : '주소 정보 없음';
             const li = document.createElement('li');
             li.innerHTML = `
             <span class="num">${num}</span>
@@ -131,80 +331,79 @@
         const p = pageData.pagination;
         if (!p || p.totalPages === 0) return;
         let html = '<ul>';
-        if (p.startPage > 1) { html += `<li><a onclick="fetchTours(${p.startPage - 1}, '${keyword}')">«</a></li>`; }
-        else { html += `<li class="disabled"><span>«</span></li>`; }
-        if (p.page > 1) { html += `<li><a onclick="fetchTours(${p.page - 1}, '${keyword}')">&lt;</a></li>`; }
-        else { html += `<li class="disabled"><span>&lt;</span></li>`; }
+        if (p.startPage > 1) { html += `<li><a onclick="fetchTours(${p.startPage - 1}, '${keyword}')">«</a></li>`; } else { html += `<li class="disabled"><span>«</span></li>`; }
+        if (p.page > 1) { html += `<li><a onclick="fetchTours(${p.page - 1}, '${keyword}')">&lt;</a></li>`; } else { html += `<li class="disabled"><span>&lt;</span></li>`; }
         for (let i = p.startPage; i <= p.endPage; i++) {
             const activeClass = (i === p.page) ? 'class="active"' : '';
             html += `<li ${activeClass}><a onclick="fetchTours(${i}, '${keyword}')">${i}</a></li>`;
         }
-        if (p.page < p.totalPages) { html += `<li><a onclick="fetchTours(${p.page + 1}, '${keyword}')">&gt;</a></li>`; }
-        else { html += `<li class="disabled"><span>&gt;</span></li>`; }
-        if (p.endPage < p.totalPages) { html += `<li><a onclick="fetchTours(${p.endPage + 1}, '${keyword}')">»</a></li>`; }
-        else { html += `<li class="disabled"><span>»</span></li>`; }
+        if (p.page < p.totalPages) { html += `<li><a onclick="fetchTours(${p.page + 1}, '${keyword}')">&gt;</a></li>`; } else { html += `<li class="disabled"><span>&gt;</span></li>`; }
+        if (p.endPage < p.totalPages) { html += `<li><a onclick="fetchTours(${p.endPage + 1}, '${keyword}')">»</a></li>`; } else { html += `<li class="disabled"><span>»</span></li>`; }
         html += '</ul>';
         paginationEl.innerHTML = html;
     }
 
     function updateMap(tourList) {
         clearMap();
-        if (!tourList || tourList.length === 0) return;
+        if (!tourList || tourList.length === 0) {
+            map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
+            map.setLevel(7);
+            return;
+        }
         const bounds = new kakao.maps.LatLngBounds();
         tourList.forEach(tour => {
             const pos = new kakao.maps.LatLng(tour.lat, tour.lng);
-            const marker = new kakao.maps.Marker({ map: map, position: pos });
+            const marker = new kakao.maps.Marker({map: map, position: pos});
             markers.push(marker);
             bounds.extend(pos);
 
-            kakao.maps.event.addListener(marker, 'click', function() {
-                showCustomOverlay(tour);
+            kakao.maps.event.addListener(marker, 'click', function () {
+                showCustomOverlay(tour, pos);
             });
         });
         map.setBounds(bounds);
     }
 
-    function showCustomOverlay(tour) {
-        if(customOverlay) customOverlay.setMap(null);
+    function showCustomOverlay(tour, position) {
+        if (customOverlay) customOverlay.setMap(null);
 
         const imageUrl = tour.img ? tour.img : '/images/default.png';
+        const imageHtml = `<div style="height: 280px; background: url('${imageUrl}') no-repeat center center; background-size: cover;"></div>`;
+
         const content = `
         <div style="
             position:relative;
-            padding:10px;
-            width:700px;
-            height:450px;
+            display:flex; flex-direction:column;
+            width:400px;
             background:#fff;
             border-radius:10px;
-            box-shadow:0 6px 20px rgba(0,0,0,0.4);
-            text-align:center;
-            font-size:20px;
-            font-weight:bold;
+            box-shadow:0 10px 30px rgba(0,0,0,0.2);
+            text-align:left;
+            font-family: 'Noto Sans KR', sans-serif;
             overflow:hidden;
         ">
             <button onclick="customOverlay.setMap(null);" style="
-                position:absolute;
-                top:10px;
-                right:10px;
-                border:none;
-                background:#f87171;
-                color:#fff;
-                font-size:16px;
-                border-radius:5px;
-                cursor:pointer;
-                padding:6px 10px;
+                position:absolute; top:8px; right:8px;
+                border:none; background:rgba(0,0,0,0.4); color:#fff;
+                width:24px; height:24px; line-height:24px; text-align:center;
+                font-size:14px; border-radius:50%; cursor:pointer;
+                padding:0; z-index:1;
             ">✕</button>
-            <div style="margin-top:10px;">${tour.title}</div>
-            <img src="${imageUrl}" style="width:100%; height:380px; object-fit:cover; margin-top:10px; border-radius:6px;" />
+            ${imageHtml}
+            <div style="padding:15px;">
+                <strong style="font-size:18px; color:#2c3e50; display:block; margin-bottom:5px;">${tour.title}</strong>
+                <span style="font-size:14px; color:#64748b;">${tour.address ? tour.address : ''}</span>
+            </div>
         </div>`;
 
         customOverlay = new kakao.maps.CustomOverlay({
             content: content,
-            position: map.getCenter(),
-            xAnchor: 0.5,
-            yAnchor: 0.5,
-            map: map
+            position: position,
+            yAnchor: 1.05
         });
+
+        map.panTo(position);
+        customOverlay.setMap(map);
     }
 
     function addListClickListeners() {
@@ -214,9 +413,17 @@
                 const lng = parseFloat(li.dataset.lng);
                 const pos = new kakao.maps.LatLng(lat, lng);
 
-                map.panTo(pos);
+                const tourData = {
+                    title: li.dataset.title,
+                    address: li.querySelector('div > span').innerText,
+                    img: li.dataset.img,
+                };
 
-                map.setLevel(4);
+                map.panTo(pos);
+                setTimeout(() => {
+                    map.setLevel(4, {animate: true});
+                    showCustomOverlay(tourData, pos);
+                }, 300);
             });
         });
     }
@@ -244,7 +451,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        fetchTours();
+        const initialKeyword = document.getElementById('keywordInput').value || '';
+        fetchTours(1, initialKeyword);
     });
 </script>
 
