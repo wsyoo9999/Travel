@@ -7,10 +7,6 @@ import java.util.List;
 
 @Mapper
 public interface TourismMapper {
-    int count(@Param("query") String keyword);
+    int count(@Param("keyword") String keyword);
     List<TourismVO> findList(@Param("keyword") String keyword, @Param("limit") int limit, @Param("offset") int offset);
-
-    List<TourismVO> list(@Param("offset") int offset,
-                         @Param("limit") int size,
-                         @Param("query") String query);
 }

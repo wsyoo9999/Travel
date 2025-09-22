@@ -13,16 +13,16 @@ public class TourController {
     }
     @GetMapping("/")
     public String mainPage(Model model) {
-//        PageResponseVO pageData = tourismService.findTourismList(null, 0, 5);
-//        model.addAttribute("pageData", pageData);
-        return "index1";
+        PageResponseVO pageData = tourismService.findTourismList(null, 0, 5);
+        model.addAttribute("pageData", pageData);
+        return "index";
     }
-//    @GetMapping("/list")
-//    public String listFragment(@RequestParam(required = false) String keyword,
-//                               @RequestParam(defaultValue = "0") int page,
-//                               Model model) {
-//        PageResponseVO pageData = tourismService.findTourismList(keyword, page, 5);
-//        model.addAttribute("pageData", pageData);
-//        return "index :: #tourismListContainer";
-//    }
+    @GetMapping("/list")
+    public String listFragment(@RequestParam(required = false) String keyword,
+                               @RequestParam(defaultValue = "0") int page,
+                               Model model) {
+        PageResponseVO pageData = tourismService.findTourismList(keyword, page, 5);
+        model.addAttribute("pageData", pageData);
+        return "index :: #tourismListContainer";
+    }
 }
