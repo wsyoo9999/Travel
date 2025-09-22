@@ -33,27 +33,24 @@
             backdrop-filter: blur(5px);
         }
 
-        /* [추가] 제목과 검색창을 감싸는 Flex Wrapper */
         .title-search-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 80%;
             max-width: 1200px;
-            margin: 70px auto 15px auto; /* 상단 여백 확보 및 하단 여백 조정 */
+            margin: 70px auto 15px auto;
         }
 
-        /* [변경] 제목 스타일 수정 */
         .main-title {
-            margin: 0; /* 불필요한 여백 제거 */
+            margin: 0;
             font-size: 28px;
             font-weight: 700;
             color: #2c3e50;
         }
 
-        /* [변경] 검색창 컨테이너 스타일 수정 */
         #searchContainer {
-            margin: 0; /* 불필요한 여백 제거 */
+            margin: 0;
             padding: 0;
         }
 
@@ -99,15 +96,13 @@
             background: #1d4ed8;
         }
 
-        /* --- 지도 및 목록 컨테이너 --- */
-        /* [변경] 높이 및 상단 여백 조정 */
         #container {
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 130px); /* 전체 높이에서 상단 영역 제외한 값으로 재계산 */
+            height: calc(100vh - 130px);
             width: 80%;
             max-width: 1200px;
-            margin: 0 auto 20px auto; /* 상단 여백 제거, 하단 여백 추가 */
+            margin: 0 auto 20px auto;
             border-radius: 12px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
             overflow: hidden;
@@ -125,7 +120,6 @@
             width: 100%;
         }
 
-        /* --- 장소 목록 스타일 --- */
         #placesList {
             list-style: none;
             padding: 0;
@@ -174,7 +168,6 @@
             color: #64748b;
         }
 
-        /* --- 페이지네이션 --- */
         .pagination {
             display: flex;
             justify-content: center;
@@ -233,7 +226,6 @@
             transform: none;
         }
 
-        /* --- 홈으로 가기 버튼 --- */
         .back-btn {
             position: fixed;
             top: 15px;
@@ -364,17 +356,40 @@
         map.setBounds(bounds);
     }
 
-    function showCustomOverlay(tour, position) {
+    async function showCustomOverlay(tour, position) {
         if (customOverlay) customOverlay.setMap(null);
 
-        const imageUrl = tour.img ? tour.img : '/images/default.png';
-        const imageHtml = `<div style="height: 280px; background: url('${imageUrl}') no-repeat center center; background-size: cover;"></div>`;
+        // 기본 이미지를 tour.img 값으로 설정하고, API 호출이 실패하거나 결과가 없을 경우 사용
+        let imageUrls = [tour.img ? tour.img : '/images/default.png'];
 
+        try {
+            const response = await fetch(`/api/img?no=${tour.no}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    imageUrls = data; // API로부터 받은 이미지 URL 배열로 교체
+                }
+            }
+        } catch (error) {
+            console.error('이미지 로딩 오류:', error);
+        }
+
+        // [변경] 이미지 3개를 가로로 배치하는 HTML 생성
+        // 이미지가 1개 또는 2개만 있을 경우를 대비해, 나머지 공간은 채우지 않도록 처리
+        let imageHtml = `
+            <div style="display: flex; height: 280px; background-color: #eee;">
+                ${imageUrls.slice(0, 3).map(url => `
+                    <div style="flex: 1; background: url('${url}') no-repeat center center; background-size: cover; border-right: 2px solid #fff;"></div>
+                `).join('')}
+            </div>`;
+
+
+        //컨텐트 박스쪽
         const content = `
         <div style="
             position:relative;
             display:flex; flex-direction:column;
-            width:400px;
+            width:900px;
             background:#fff;
             border-radius:10px;
             box-shadow:0 10px 30px rgba(0,0,0,0.2);
@@ -389,7 +404,9 @@
                 font-size:14px; border-radius:50%; cursor:pointer;
                 padding:0; z-index:1;
             ">✕</button>
+
             ${imageHtml}
+
             <div style="padding:15px;">
                 <strong style="font-size:18px; color:#2c3e50; display:block; margin-bottom:5px;">${tour.title}</strong>
                 <span style="font-size:14px; color:#64748b;">${tour.address ? tour.address : ''}</span>
@@ -414,6 +431,7 @@
                 const pos = new kakao.maps.LatLng(lat, lng);
 
                 const tourData = {
+                    no: li.dataset.no,
                     title: li.dataset.title,
                     address: li.querySelector('div > span').innerText,
                     img: li.dataset.img,
