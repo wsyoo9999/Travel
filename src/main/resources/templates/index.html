@@ -213,7 +213,10 @@
                 const lat = parseFloat(li.dataset.lat);
                 const lng = parseFloat(li.dataset.lng);
                 const pos = new kakao.maps.LatLng(lat, lng);
-                map.panTo(pos); // ✅ 노란별 제거, 파란마커만 유지
+
+                map.panTo(pos);
+
+                map.setLevel(4);
             });
         });
     }
