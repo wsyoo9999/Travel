@@ -312,6 +312,7 @@
             li.dataset.lng = tour.lng;
             li.dataset.title = tour.title;
             li.dataset.no = tour.no;
+            li.dataset.description = tour.description;
             li.dataset.img = tour.img ? tour.img : '/images/default.png';
             listEl.appendChild(li);
         });
@@ -390,6 +391,7 @@
             position:relative;
             display:flex; flex-direction:column;
             width:900px;
+            max-width:90vw;
             background:#fff;
             border-radius:10px;
             box-shadow:0 10px 30px rgba(0,0,0,0.2);
@@ -409,10 +411,10 @@
 
             <div style="padding:15px;">
                 <strong style="font-size:18px; color:#2c3e50; display:block; margin-bottom:5px;">${tour.title}</strong>
+                <span style=" font-size:16px; color:#2c3e50; display:block; margin-bottom:6px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${tour.description}</span>
                 <span style="font-size:14px; color:#64748b;">${tour.address ? tour.address : ''}</span>
             </div>
         </div>`;
-
         customOverlay = new kakao.maps.CustomOverlay({
             content: content,
             position: position,
@@ -433,6 +435,7 @@
                 const tourData = {
                     no: li.dataset.no,
                     title: li.dataset.title,
+                    description: li.dataset.description,
                     address: li.querySelector('div > span').innerText,
                     img: li.dataset.img,
                 };
@@ -472,6 +475,7 @@
         const initialKeyword = document.getElementById('keywordInput').value || '';
         fetchTours(1, initialKeyword);
     });
+
 </script>
 
 </body>
