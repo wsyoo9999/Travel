@@ -18,5 +18,5 @@ public interface TourismMapper {
                                    @Param("size") int size,
                                    @Param("keyword") String keyword);
 
-    String getImg(@Param("id")int in);
+    String getImg(@Param("no")int no);
 }

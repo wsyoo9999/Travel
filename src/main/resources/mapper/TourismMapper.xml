@@ -10,7 +10,7 @@
     </select>
 
     <select id="getImg" resultType="String" parameterType="int">
-        SELECT img FROM travel where id = #{id} 0RDER BY no ASC
+        SELECT img FROM travel where no = #{no} 0RDER BY no ASC
     </select>
     <select id="getTouristById" resultType="com.multi.travel.vo.TourismVO">
         SELECT * FROM travel WHERE no = #{no}

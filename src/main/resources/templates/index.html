@@ -95,14 +95,12 @@
     });
 
     let markers = [];
-    let highlightedMarker = null;
     let customOverlay = null;
 
     function clearMap() {
         markers.forEach(m => m.setMap(null));
         markers = [];
         if(customOverlay) customOverlay.setMap(null);
-        highlightedMarker = null;
     }
 
     function renderList(pageData) {
@@ -215,23 +213,7 @@
                 const lat = parseFloat(li.dataset.lat);
                 const lng = parseFloat(li.dataset.lng);
                 const pos = new kakao.maps.LatLng(lat, lng);
-                map.panTo(pos);
-
-                // 강조 표시
-                if(highlightedMarker) highlightedMarker.setImage(null);
-                const targetMarker = markers.find(m => m.getPosition().equals(pos));
-                if (targetMarker) {
-                    highlightedMarker = targetMarker;
-                    const markerImage = new kakao.maps.MarkerImage(
-                        "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
-                        new kakao.maps.Size(24,35)
-                    );
-                    targetMarker.setImage(markerImage);
-                    showCustomOverlay({
-                        title: li.dataset.title,
-                        img: li.dataset.img
-                    });
-                }
+                map.panTo(pos); // ✅ 노란별 제거, 파란마커만 유지
             });
         });
     }

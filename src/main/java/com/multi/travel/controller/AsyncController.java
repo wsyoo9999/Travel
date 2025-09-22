@@ -49,39 +49,45 @@ public class AsyncController {
     }
 
     @GetMapping("/img")
-    public List<String> getImg(@RequestParam Integer id) {
-        String keyword = tourismService.getImg(id);
+    public List<String> getImg(@RequestParam Integer no) {
+        String keyword = tourismService.getImg(no);
         List<String> urls = new LinkedList<>();
-        try{
-            String urlStr = "http://apis.data.go.kr/B551011/PhotoGalleryService1/gallerySearchList1"
-                    + "?serviceKey=" + URLEncoder.encode(serviceKey, "UTF-8")
-                    + "&keyword=" + URLEncoder.encode(keyword, "UTF-8")
-                    + "&MobileOS=ETC&MobileApp=AppTest&_type=json&numOfRows=1&pageNo=1";
+        if (keyword == null) {
+            urls.add("/img/default.jpg");
+            return urls;
+        }else{
+            try{
+                String urlStr = "http://apis.data.go.kr/B551011/PhotoGalleryService1/gallerySearchList1"
+                        + "?serviceKey=" + URLEncoder.encode(serviceKey, "UTF-8")
+                        + "&keyword=" + URLEncoder.encode(keyword, "UTF-8")
+                        + "&MobileOS=ETC&MobileApp=AppTest&_type=json&numOfRows=1&pageNo=1";
 
-            System.out.println(urlStr);
+                System.out.println(urlStr);
 
-            RestTemplate restTemplate = new RestTemplate();
-            String result = restTemplate.getForObject(urlStr, String.class);
+                RestTemplate restTemplate = new RestTemplate();
+                String result = restTemplate.getForObject(urlStr, String.class);
 
-            JSONObject json = new JSONObject(result);
-            JSONArray items = json.getJSONObject("response")
-                    .getJSONObject("body")
-                    .getJSONObject("items")
-                    .getJSONArray("item");
+                JSONObject json = new JSONObject(result);
+                JSONArray items = json.getJSONObject("response")
+                        .getJSONObject("body")
+                        .getJSONObject("items")
+                        .getJSONArray("item");
 
-            if(items.length() > 0){
-                int i = 0;
-                while(items.getJSONObject(i)!=null || i<=2){
-                    urls.add(items.getJSONObject(i).getString("galWebImageUrl"));
-                    i++;
+                if(items.length() > 0){
+                    int i = 0;
+                    while(items.getJSONObject(i)!=null || i<=2){
+                        urls.add(items.getJSONObject(i).getString("galWebImageUrl"));
+                        i++;
+                    }
+                    return urls;
                 }
-                return urls;
-            }
 
-        }catch(Exception e){
-            e.printStackTrace();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            return null;
         }
-        return null;
+
     }
 
 }

@@ -35,7 +35,7 @@ public class TourismService {
         return new PageResponseVO<>(list, pagination);
     }
 
-    public String getImg(int id){
-        return mapper.getImg(id);
+    public String getImg(int no){
+        return mapper.getImg(no);
     }
 }
