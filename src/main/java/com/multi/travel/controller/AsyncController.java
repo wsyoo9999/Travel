@@ -49,7 +49,8 @@ public class AsyncController {
         List<String> urls = new LinkedList<>();
 
         if (keyword == null || keyword.trim().isEmpty()) {
-            urls.add("/images/default.png"); // 기본 이미지 경로
+            urls.add("http://tong.visitkorea.or.kr/cms2/website/13/1093613.jpg");
+            System.out.println("1111");// 기본 이미지 경로
             return urls;
         }
 
@@ -92,8 +93,9 @@ public class AsyncController {
         }
 
         if (urls.isEmpty()) {
-            urls.add("/images/default.png");
+            urls.add("http://tong.visitkorea.or.kr/cms2/website/13/1093613.jpg");
         }
+        System.out.println(urls);
 
         return urls;
     }

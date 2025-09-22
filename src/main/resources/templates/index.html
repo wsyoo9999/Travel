@@ -360,7 +360,7 @@
         if (customOverlay) customOverlay.setMap(null);
 
         // 기본 이미지를 tour.img 값으로 설정하고, API 호출이 실패하거나 결과가 없을 경우 사용
-        let imageUrls = [tour.img ? tour.img : '/images/default.png'];
+        // let imageUrls = [tour.img !=null ? tour.img : 'http://tong.visitkorea.or.kr/cms2/website/90/2619690.jpg'];
 
         try {
             const response = await fetch(`/api/img?no=${tour.no}`);
