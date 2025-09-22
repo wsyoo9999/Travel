@@ -1,20 +1,41 @@
 package com.multi.travel.service;
+
 import com.multi.travel.mapper.TourismMapper;
 import com.multi.travel.vo.PageResponseVO;
 import com.multi.travel.vo.TourismVO;
+import com.multi.travel.support.Pagination;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
+
 @Service
 public class TourismService {
-    private final TourismMapper tourismMapper;
-    public TourismService(TourismMapper tourismMapper) {
-        this.tourismMapper = tourismMapper;
+
+    private final TourismMapper mapper;
+
+    public TourismService(TourismMapper mapper) {
+        this.mapper = mapper;
     }
-    public PageResponseVO findTourismList(String keyword, int page, int size) {
-        int total = tourismMapper.count(keyword);
-        int offset = page * size;
-        List<TourismVO> list = tourismMapper.findList(keyword, size, offset);
-        int totalPages = (total == 0) ? 0 : (int) Math.ceil((double) total / size);
-        return new PageResponseVO(list, page, size, totalPages, total);
+
+    public List<TourismVO> getTouristList() {
+        return mapper.getTouristList();
+    }
+
+    public TourismVO getTouristById(int no) {
+        return mapper.getTouristById(no);
+    }
+
+    public int countTourist(String keyword) {
+        return mapper.countTourist(keyword);
+    }
+
+    public PageResponseVO<TourismVO> getTouristPage(int start, int size, String keyword) {
+        List<TourismVO> list = mapper.getTouristPage(start, size, keyword);
+        Pagination pagination = new Pagination(start / size + 1, size, countTourist(keyword), 5);
+        return new PageResponseVO<>(list, pagination);
+    }
+
+    public String getImg(int id){
+        return mapper.getImg(id);
     }
 }

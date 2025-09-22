@@ -1,28 +1,28 @@
 package com.multi.travel.controller;
-import com.multi.travel.service.TourismService;
-import com.multi.travel.vo.PageResponseVO;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
 @Controller
 public class TourController {
-    private final TourismService tourismService;
-    public TourController(TourismService tourismService) {
+
+    private final com.multi.travel.service.TourismService tourismService;
+    public TourController(com.multi.travel.service.TourismService tourismService) {
         this.tourismService = tourismService;
     }
+
     @GetMapping("/")
-    public String mainPage(Model model) {
-        PageResponseVO pageData = tourismService.findTourismList(null, 0, 5);
-        model.addAttribute("pageData", pageData);
+    public String index(Model model) {
+        model.addAttribute("keyword", "");
         return "index";
     }
-    @GetMapping("/list")
-    public String listFragment(@RequestParam(required = false) String keyword,
-                               @RequestParam(defaultValue = "0") int page,
-                               Model model) {
-        PageResponseVO pageData = tourismService.findTourismList(keyword, page, 5);
-        model.addAttribute("pageData", pageData);
-        return "index :: #tourismListContainer";
+
+    @GetMapping("/tour")
+    public String detail(@RequestParam int no, Model model) {
+        com.multi.travel.vo.TourismVO vo = tourismService.getTouristById(no);
+        model.addAttribute("tour", vo);
+        return "detail";
     }
 }
