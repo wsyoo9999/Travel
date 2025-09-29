@@ -23,7 +23,7 @@ import java.util.*;
 public class AsyncController {
 
     private final TourismService tourismService;
-    private final String serviceKey = "8267e45b7e32c93e61785aaeda84a54a4bb14b89491bf714e2a4b41a1a01bf49"; // 실제 유효한 서비스 키를 입력하세요.
+    private final String serviceKey = "공공데이터포털 서비스 키"; // 서비스 키를 입력하세요.
 
     @GetMapping("/tours")
     public Map<String, Object> getTours(
